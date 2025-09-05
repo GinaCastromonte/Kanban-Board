@@ -9,7 +9,7 @@
   --card-foreground: hsl(0, 0%, 95%);
   --popover: hsl(240, 12%, 12%);
   --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(310, 70%, 65%);
+  --primary: #A53860;
   --primary-foreground: hsl(0, 0%, 98%);
   --secondary: hsl(240, 8%, 18%);
   --secondary-foreground: hsl(0, 0%, 90%);
@@ -21,20 +21,20 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 8%, 22%);
   --input: hsl(240, 8%, 22%);
-  --ring: hsl(310, 70%, 65%);
-  --chart-1: hsl(310, 70%, 65%);
+  --ring: #A53860;
+  --chart-1: #A53860;
   --chart-2: hsl(180, 70%, 55%);
   --chart-3: hsl(42, 93%, 56%);
   --chart-4: hsl(270, 60%, 70%);
   --chart-5: hsl(341, 75%, 51%);
   --sidebar: hsl(240, 15%, 8%);
   --sidebar-foreground: hsl(0, 0%, 95%);
-  --sidebar-primary: hsl(310, 70%, 65%);
+  --sidebar-primary: #A53860;
   --sidebar-primary-foreground: hsl(0, 0%, 98%);
   --sidebar-accent: hsl(240, 8%, 18%);
   --sidebar-accent-foreground: hsl(0, 0%, 90%);
   --sidebar-border: hsl(240, 8%, 22%);
-  --sidebar-ring: hsl(310, 70%, 65%);
+  --sidebar-ring: #A53860;
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -58,7 +58,7 @@
   --card-foreground: hsl(0, 0%, 95%);
   --popover: hsl(240, 12%, 12%);
   --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(310, 70%, 65%);
+  --primary: #A53860;
   --primary-foreground: hsl(0, 0%, 98%);
   --secondary: hsl(240, 8%, 18%);
   --secondary-foreground: hsl(0, 0%, 90%);
@@ -70,7 +70,7 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 8%, 22%);
   --input: hsl(240, 8%, 22%);
-  --ring: hsl(310, 70%, 65%);
+  --ring: #A53860;
 }
 
 @layer base {
@@ -112,22 +112,22 @@
 
   .sticky-note:hover {
     background: linear-gradient(145deg, hsl(240, 12%, 17%), hsl(240, 15%, 14%));
-    box-shadow: 0 6px 20px rgba(222, 130, 235, 0.15);
+    box-shadow: 0 6px 20px rgba(165, 56, 96, 0.15);
   }
 
   .wins-section {
-    background: linear-gradient(135deg, hsl(310, 70%, 65%, 0.1), hsl(180, 70%, 55%, 0.1), hsl(270, 60%, 70%, 0.05));
-    border: 1px solid hsl(310, 70%, 65%, 0.3);
+    background: linear-gradient(135deg, rgba(165, 56, 96, 0.1), hsl(180, 70%, 55%, 0.1), hsl(270, 60%, 70%, 0.05));
+    border: 1px solid rgba(165, 56, 96, 0.3);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
 
   .wins-section.minimized {
-    background: linear-gradient(135deg, hsl(310, 70%, 65%, 0.05), hsl(180, 70%, 55%, 0.05));
-    border: 1px solid hsl(310, 70%, 65%, 0.2);
+    background: linear-gradient(135deg, rgba(165, 56, 96, 0.05), hsl(180, 70%, 55%, 0.05));
+    border: 1px solid rgba(165, 56, 96, 0.2);
   }
 
   .interactive-gradient {
-    background: linear-gradient(135deg, hsl(310, 70%, 65%), hsl(180, 70%, 55%));
+    background: linear-gradient(135deg, #A53860, hsl(180, 70%, 55%));
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
   }
