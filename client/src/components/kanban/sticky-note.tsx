@@ -33,14 +33,14 @@ export function StickyNote({ goal, onCommentClick, isDragging = false }: StickyN
 
   const getGoalTypeStyle = (type: string) => {
     return type === "short-term" 
-      ? "bg-accent/20 text-accent" 
-      : "bg-purple-500/20 text-purple-400";
+      ? "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30" 
+      : "bg-gradient-to-r from-purple-500/20 to-pink-500/30 text-purple-400 border border-purple-400/30";
   };
 
   const getAssigneeStyle = (assignee: string) => {
     return assignee === "JD" 
-      ? "bg-primary/20 text-primary" 
-      : "bg-accent/20 text-accent";
+      ? "bg-gradient-to-r from-primary/20 to-primary/30 text-primary border border-primary/30" 
+      : "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30";
   };
 
   return (

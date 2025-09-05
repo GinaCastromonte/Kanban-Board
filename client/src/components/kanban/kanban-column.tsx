@@ -22,13 +22,13 @@ export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal }: Ka
   const getColumnColor = (title: string) => {
     switch (title.toLowerCase()) {
       case "todo":
-        return "bg-blue-500";
+        return "bg-gradient-to-r from-blue-500 to-purple-500";
       case "doing":
-        return "bg-purple-500";
+        return "bg-gradient-to-r from-purple-500 to-pink-500";
       case "done":
-        return "bg-primary";
+        return "bg-gradient-to-r from-primary to-accent";
       default:
-        return "bg-gray-500";
+        return "bg-gradient-to-r from-gray-500 to-gray-600";
     }
   };
 
@@ -44,7 +44,7 @@ export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal }: Ka
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className={cn("w-3 h-3 rounded-full", getColumnColor(column.title))} />
-          <h3 className="font-semibold text-lg" data-testid={`title-${column.title.toLowerCase()}`}>
+          <h3 className="font-semibold text-lg bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent" data-testid={`title-${column.title.toLowerCase()}`}>
             {column.title}
           </h3>
           <Badge variant="secondary" data-testid={`count-${column.title.toLowerCase()}`}>

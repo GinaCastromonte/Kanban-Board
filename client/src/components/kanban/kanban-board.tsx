@@ -109,7 +109,7 @@ export function KanbanBoard() {
             <div className="flex items-center space-x-3">
               <Button 
                 onClick={() => setIsGoalModalOpen(true)}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:from-primary/90 hover:to-accent/90 shadow-lg transition-all duration-300"
                 data-testid="button-add-goal"
               >
                 <Plus size={16} className="mr-2" />

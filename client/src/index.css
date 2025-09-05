@@ -3,38 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: #0A043C;
+  --background: hsl(240, 15%, 8%);
   --foreground: hsl(0, 0%, 98%);
-  --card: #03506F;
+  --card: hsl(240, 12%, 12%);
   --card-foreground: hsl(0, 0%, 95%);
-  --popover: #03506F;
+  --popover: hsl(240, 12%, 12%);
   --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(158, 64%, 52%);
+  --primary: hsl(310, 70%, 65%);
   --primary-foreground: hsl(0, 0%, 98%);
-  --secondary: hsl(210, 40%, 25%);
+  --secondary: hsl(240, 8%, 18%);
   --secondary-foreground: hsl(0, 0%, 90%);
-  --muted: hsl(210, 40%, 25%);
-  --muted-foreground: hsl(210, 20%, 70%);
-  --accent: hsl(188, 95%, 42%);
+  --muted: hsl(240, 8%, 18%);
+  --muted-foreground: hsl(240, 10%, 65%);
+  --accent: hsl(180, 70%, 55%);
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 62%, 56%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --border: hsl(210, 30%, 35%);
-  --input: hsl(210, 30%, 35%);
-  --ring: hsl(158, 64%, 52%);
-  --chart-1: hsl(158, 64%, 52%);
-  --chart-2: hsl(188, 95%, 42%);
+  --border: hsl(240, 8%, 22%);
+  --input: hsl(240, 8%, 22%);
+  --ring: hsl(310, 70%, 65%);
+  --chart-1: hsl(310, 70%, 65%);
+  --chart-2: hsl(180, 70%, 55%);
   --chart-3: hsl(42, 93%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
+  --chart-4: hsl(270, 60%, 70%);
   --chart-5: hsl(341, 75%, 51%);
-  --sidebar: #0A043C;
+  --sidebar: hsl(240, 15%, 8%);
   --sidebar-foreground: hsl(0, 0%, 95%);
-  --sidebar-primary: hsl(158, 64%, 52%);
+  --sidebar-primary: hsl(310, 70%, 65%);
   --sidebar-primary-foreground: hsl(0, 0%, 98%);
-  --sidebar-accent: hsl(210, 40%, 25%);
+  --sidebar-accent: hsl(240, 8%, 18%);
   --sidebar-accent-foreground: hsl(0, 0%, 90%);
-  --sidebar-border: hsl(210, 30%, 35%);
-  --sidebar-ring: hsl(158, 64%, 52%);
+  --sidebar-border: hsl(240, 8%, 22%);
+  --sidebar-ring: hsl(310, 70%, 65%);
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -52,25 +52,25 @@
 }
 
 .dark {
-  --background: #0A043C;
+  --background: hsl(240, 15%, 8%);
   --foreground: hsl(0, 0%, 98%);
-  --card: #03506F;
+  --card: hsl(240, 12%, 12%);
   --card-foreground: hsl(0, 0%, 95%);
-  --popover: #03506F;
+  --popover: hsl(240, 12%, 12%);
   --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(158, 64%, 52%);
+  --primary: hsl(310, 70%, 65%);
   --primary-foreground: hsl(0, 0%, 98%);
-  --secondary: hsl(210, 40%, 25%);
+  --secondary: hsl(240, 8%, 18%);
   --secondary-foreground: hsl(0, 0%, 90%);
-  --muted: hsl(210, 40%, 25%);
-  --muted-foreground: hsl(210, 20%, 70%);
-  --accent: hsl(188, 95%, 42%);
+  --muted: hsl(240, 8%, 18%);
+  --muted-foreground: hsl(240, 10%, 65%);
+  --accent: hsl(180, 70%, 55%);
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 62%, 56%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --border: hsl(210, 30%, 35%);
-  --input: hsl(210, 30%, 35%);
-  --ring: hsl(158, 64%, 52%);
+  --border: hsl(240, 8%, 22%);
+  --input: hsl(240, 8%, 22%);
+  --ring: hsl(310, 70%, 65%);
 }
 
 @layer base {
@@ -105,18 +105,37 @@
   }
 
   .sticky-note {
-    background: linear-gradient(145deg, hsl(210, 35%, 18%), hsl(210, 35%, 15%));
-    border: 1px solid hsl(210, 30%, 35%);
+    background: linear-gradient(145deg, hsl(240, 12%, 15%), hsl(240, 15%, 12%));
+    border: 1px solid hsl(240, 8%, 22%);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .sticky-note:hover {
+    background: linear-gradient(145deg, hsl(240, 12%, 17%), hsl(240, 15%, 14%));
+    box-shadow: 0 6px 20px rgba(222, 130, 235, 0.15);
   }
 
   .wins-section {
-    background: linear-gradient(90deg, hsl(158, 64%, 52%, 0.1), hsl(188, 95%, 42%, 0.1));
-    border: 1px solid hsl(158, 64%, 52%, 0.3);
+    background: linear-gradient(135deg, hsl(310, 70%, 65%, 0.1), hsl(180, 70%, 55%, 0.1), hsl(270, 60%, 70%, 0.05));
+    border: 1px solid hsl(310, 70%, 65%, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
 
   .wins-section.minimized {
-    background: linear-gradient(90deg, hsl(158, 64%, 52%, 0.05), hsl(188, 95%, 42%, 0.05));
-    border: 1px solid hsl(158, 64%, 52%, 0.2);
+    background: linear-gradient(135deg, hsl(310, 70%, 65%, 0.05), hsl(180, 70%, 55%, 0.05));
+    border: 1px solid hsl(310, 70%, 65%, 0.2);
+  }
+
+  .interactive-gradient {
+    background: linear-gradient(135deg, hsl(310, 70%, 65%), hsl(180, 70%, 55%));
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
   .pulse-animation {

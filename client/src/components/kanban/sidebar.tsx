@@ -18,7 +18,7 @@ export function Sidebar() {
             All Boards (3)
           </h3>
           <div className="space-y-2">
-            <div className="bg-primary text-primary-foreground rounded-lg p-3 font-medium flex items-center" data-testid="board-personal-goals">
+            <div className="bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg p-3 font-medium flex items-center shadow-lg" data-testid="board-personal-goals">
               <Rocket className="mr-3" size={16} />
               Personal Goals
             </div>
