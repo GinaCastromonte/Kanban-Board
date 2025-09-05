@@ -8,6 +8,7 @@ import { WinsSection } from "./wins-section";
 import { StickyNote } from "./sticky-note";
 import { GoalModal } from "./goal-modal";
 import { CommentModal } from "./comment-modal";
+import { ColumnModal } from "./column-modal";
 import { useKanban } from "@/hooks/use-kanban";
 import type { Goal } from "@shared/schema";
 
@@ -17,6 +18,7 @@ export function KanbanBoard() {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
   const {
     boards,
@@ -26,6 +28,7 @@ export function KanbanBoard() {
     isLoading,
     moveGoal,
     createGoal,
+    createColumn,
     updateGoal,
     deleteGoal
   } = useKanban();
@@ -122,18 +125,31 @@ export function KanbanBoard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 h-full min-h-[600px]">
+          <div className="flex gap-6 h-full min-h-[600px] overflow-x-auto pb-4">
             <SortableContext items={boardColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
               {boardColumns.map((column) => (
-                <KanbanColumn
-                  key={column.id}
-                  column={column}
-                  goals={boardGoals.filter(goal => goal.columnId === column.id)}
-                  onCommentClick={handleCommentClick}
-                  onCreateGoal={() => setIsGoalModalOpen(true)}
-                />
+                <div key={column.id} className="flex-shrink-0 w-80">
+                  <KanbanColumn
+                    column={column}
+                    goals={boardGoals.filter(goal => goal.columnId === column.id)}
+                    onCommentClick={handleCommentClick}
+                    onCreateGoal={() => setIsGoalModalOpen(true)}
+                  />
+                </div>
               ))}
             </SortableContext>
+            
+            {/* Add Column Button */}
+            <div className="flex-shrink-0 w-80">
+              <button
+                onClick={() => setIsColumnModalOpen(true)}
+                className="w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors bg-card/50"
+                data-testid="button-add-column"
+              >
+                <Plus size={24} className="mb-2" />
+                <span className="text-sm font-medium">Add Column</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -172,6 +188,21 @@ export function KanbanBoard() {
             setIsCommentModalOpen(false);
             setSelectedGoal(null);
           }}
+        />
+
+        <ColumnModal
+          isOpen={isColumnModalOpen}
+          onClose={() => setIsColumnModalOpen(false)}
+          onSubmit={(columnData) => {
+            if (currentBoard) {
+              createColumn.mutate({
+                ...columnData,
+                boardId: currentBoard.id,
+                position: boardColumns.length,
+              });
+            }
+          }}
+          isLoading={createColumn.isPending}
         />
       </div>
     </DndContext>

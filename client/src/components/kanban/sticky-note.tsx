@@ -48,6 +48,7 @@ export function StickyNote({ goal, onCommentClick, isDragging = false }: StickyN
       ref={setNodeRef}
       style={style}
       {...attributes}
+      {...listeners}
       className={cn(
         "sticky-note rounded-lg p-4 card-hover cursor-move",
         (isDragging || isSortableDragging) && "dragging",
@@ -62,15 +63,9 @@ export function StickyNote({ goal, onCommentClick, isDragging = false }: StickyN
         )} data-testid={`goal-title-${goal.id}`}>
           {goal.title}
         </h4>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-muted-foreground hover:text-foreground p-1"
-          {...listeners}
-          data-testid={`button-drag-${goal.id}`}
-        >
+        <div className="text-muted-foreground p-1" data-testid={`button-drag-${goal.id}`}>
           <GripVertical size={12} />
-        </Button>
+        </div>
       </div>
       
       <p className="text-sm text-muted-foreground mb-3" data-testid={`goal-description-${goal.id}`}>

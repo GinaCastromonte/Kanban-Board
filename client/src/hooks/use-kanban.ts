@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Board, Column, Goal, InsertGoal, MoveGoal, UpdateGoal } from "@shared/schema";
+import type { Board, Column, Goal, InsertGoal, InsertColumn, MoveGoal, UpdateGoal } from "@shared/schema";
 
 const BOARD_ID = "board1"; // Using default board for now
 
@@ -122,6 +122,28 @@ export function useKanban() {
     },
   });
 
+  // Create column mutation
+  const createColumn = useMutation({
+    mutationFn: async (columnData: InsertColumn) => {
+      const response = await apiRequest("POST", "/api/columns", columnData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", BOARD_ID, "columns"] });
+      toast({
+        title: "Column created",
+        description: "Your new column has been added successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create column. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const isLoading = boardsLoading || columnsLoading || goalsLoading || winsLoading;
 
   return {
@@ -131,6 +153,7 @@ export function useKanban() {
     wins: wins as Goal[] | undefined,
     isLoading,
     createGoal,
+    createColumn,
     updateGoal,
     moveGoal,
     deleteGoal,
