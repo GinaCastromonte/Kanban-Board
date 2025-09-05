@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MessageCircle, Send, ImageIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Goal, Comment } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
@@ -18,20 +20,22 @@ interface CommentModalProps {
 
 export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
   const [newComment, setNewComment] = useState("");
+  const [gifUrl, setGifUrl] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: comments = [], isLoading } = useQuery({
+  const { data: comments = [], isLoading } = useQuery<Comment[]>({
     queryKey: ["/api/goals", goal?.id, "comments"],
     enabled: isOpen && !!goal?.id,
   });
 
   const createComment = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, gifUrl }: { content: string; gifUrl?: string }) => {
       if (!goal) throw new Error("No goal selected");
       const response = await apiRequest("POST", "/api/comments", {
         goalId: goal.id,
         author: "JD", // TODO: Get from auth context
         content,
+        gifUrl: gifUrl || null,
       });
       return response.json();
     },
@@ -40,13 +44,17 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
         queryKey: ["/api/goals", goal?.id, "comments"],
       });
       setNewComment("");
+      setGifUrl("");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    createComment.mutate(newComment.trim());
+    createComment.mutate({ 
+      content: newComment.trim(),
+      gifUrl: gifUrl.trim() || undefined 
+    });
   };
 
   if (!goal) return null;
@@ -108,6 +116,14 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
                     <p className="text-sm text-foreground" data-testid={`comment-content-${comment.id}`}>
                       {comment.content}
                     </p>
+                    {comment.gifUrl && (
+                      <img 
+                        src={comment.gifUrl} 
+                        alt="GIF" 
+                        className="mt-2 max-w-full h-auto max-h-48 rounded border"
+                        data-testid={`comment-gif-${comment.id}`}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -116,14 +132,41 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
 
           {/* Add comment form */}
           <form onSubmit={handleSubmit} className="space-y-3" data-testid="comment-form">
-            <Textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="w-full resize-none"
-              rows={3}
-              data-testid="textarea-new-comment"
-            />
+            <div>
+              <Label htmlFor="comment-text" className="text-sm font-medium">Comment</Label>
+              <Textarea
+                id="comment-text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="w-full resize-none mt-1"
+                rows={3}
+                data-testid="textarea-new-comment"
+              />
+            </div>
+            <div>
+              <Label htmlFor="gif-url" className="text-sm font-medium flex items-center">
+                <ImageIcon size={14} className="mr-1" />
+                GIF URL (optional)
+              </Label>
+              <Input
+                id="gif-url"
+                type="url"
+                value={gifUrl}
+                onChange={(e) => setGifUrl(e.target.value)}
+                placeholder="Paste a GIF URL here..."
+                className="w-full mt-1"
+                data-testid="input-gif-url"
+              />
+              {gifUrl && (
+                <img 
+                  src={gifUrl} 
+                  alt="GIF Preview" 
+                  className="mt-2 max-w-full h-auto max-h-32 rounded border"
+                  data-testid="gif-preview"
+                />
+              )}
+            </div>
             <div className="flex justify-end space-x-3">
               <Button type="button" variant="ghost" onClick={onClose} data-testid="button-close-comments">
                 Close

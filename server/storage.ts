@@ -210,6 +210,7 @@ export class MemStorage implements IStorage {
     const board: Board = { 
       ...insertBoard, 
       id, 
+      description: insertBoard.description || null,
       createdAt: new Date() 
     };
     this.boards.set(id, board);
@@ -238,7 +239,11 @@ export class MemStorage implements IStorage {
 
   async createColumn(insertColumn: InsertColumn): Promise<Column> {
     const id = randomUUID();
-    const column: Column = { ...insertColumn, id };
+    const column: Column = { 
+      ...insertColumn, 
+      id,
+      color: insertColumn.color || "#3B82F6"
+    };
     this.columns.set(id, column);
     return column;
   }
@@ -284,6 +289,8 @@ export class MemStorage implements IStorage {
     const goal: Goal = { 
       ...insertGoal, 
       id, 
+      description: insertGoal.description || null,
+      columnId: insertGoal.columnId || null,
       completedSubtasks: 0,
       isWin: 0,
       createdAt: new Date(),
@@ -299,7 +306,7 @@ export class MemStorage implements IStorage {
     
     const updatedGoal = { ...goal, ...updates };
     if (updates.completedAt) {
-      updatedGoal.completedAt = new Date(updates.completedAt);
+      updatedGoal.completedAt = typeof updates.completedAt === 'string' ? new Date(updates.completedAt) : updates.completedAt;
     }
     this.goals.set(id, updatedGoal);
     return updatedGoal;
@@ -347,6 +354,7 @@ export class MemStorage implements IStorage {
     const comment: Comment = { 
       ...insertComment, 
       id, 
+      gifUrl: insertComment.gifUrl || null,
       createdAt: new Date() 
     };
     this.comments.set(id, comment);

@@ -39,6 +39,7 @@ export const comments = pgTable("comments", {
   goalId: varchar("goal_id").notNull(),
   author: text("author").notNull(),
   content: text("content").notNull(),
+  gifUrl: text("gif_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -78,6 +79,7 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
   goalId: true,
   author: true,
   content: true,
+  gifUrl: true,
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
