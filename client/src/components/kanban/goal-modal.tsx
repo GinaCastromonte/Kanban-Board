@@ -19,7 +19,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [goalType, setGoalType] = useState<"short-term" | "long-term">("short-term");
-  const [assignee, setAssignee] = useState("JD");
+  const [assignee, setAssignee] = useState("GC");
   const [totalSubtasks, setTotalSubtasks] = useState(1);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,7 +39,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
     setTitle("");
     setDescription("");
     setGoalType("short-term");
-    setAssignee("JD");
+    setAssignee("GC");
     setTotalSubtasks(1);
     onClose();
   };
@@ -48,7 +48,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
     setTitle("");
     setDescription("");
     setGoalType("short-term");
-    setAssignee("JD");
+    setAssignee("GC");
     setTotalSubtasks(1);
     onClose();
   };
@@ -134,26 +134,26 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
               <Badge
                 className={cn(
                   "cursor-pointer transition-colors",
-                  assignee === "JD" 
+                  assignee === "GC" 
                     ? "bg-primary/20 text-primary hover:bg-primary/30" 
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 )}
-                onClick={() => setAssignee("JD")}
-                data-testid="badge-assignee-jd"
+                onClick={() => setAssignee("GC")}
+                data-testid="badge-assignee-gc"
               >
-                JD
+                GC
               </Badge>
               <Badge
                 className={cn(
                   "cursor-pointer transition-colors",
-                  assignee === "SM" 
+                  assignee === "SK" 
                     ? "bg-primary/20 text-primary hover:bg-primary/30" 
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 )}
-                onClick={() => setAssignee("SM")}
-                data-testid="badge-assignee-sm"
+                onClick={() => setAssignee("SK")}
+                data-testid="badge-assignee-sk"
               >
-                SM
+                SK
               </Badge>
             </div>
           </div>

@@ -58,18 +58,18 @@ export class MemStorage implements IStorage {
     // Create default users
     const user1: User = {
       id: "user1",
-      username: "johndoe",
+      username: "gracechen",
       password: "password",
-      displayName: "John Doe",
-      initials: "JD"
+      displayName: "Grace Chen",
+      initials: "GC"
     };
     
     const user2: User = {
       id: "user2",
-      username: "sarahm",
+      username: "samkim",
       password: "password",
-      displayName: "Sarah Miller", 
-      initials: "SM"
+      displayName: "Sam Kim", 
+      initials: "SK"
     };
     
     this.users.set(user1.id, user1);
@@ -123,7 +123,7 @@ export class MemStorage implements IStorage {
         boardId: "board1",
         position: 0,
         goalType: "short-term",
-        assignee: "JD",
+        assignee: "GC",
         completedSubtasks: 2,
         totalSubtasks: 5,
         isWin: 0,
@@ -138,7 +138,7 @@ export class MemStorage implements IStorage {
         boardId: "board1",
         position: 1,
         goalType: "long-term",
-        assignee: "SM",
+        assignee: "SK",
         completedSubtasks: 0,
         totalSubtasks: 8,
         isWin: 0,
@@ -153,7 +153,7 @@ export class MemStorage implements IStorage {
         boardId: "board1",
         position: 0,
         goalType: "short-term",
-        assignee: "JD",
+        assignee: "GC",
         completedSubtasks: 7,
         totalSubtasks: 21,
         isWin: 0,
@@ -168,7 +168,7 @@ export class MemStorage implements IStorage {
         boardId: "board1",
         position: 0,
         goalType: "short-term",
-        assignee: "SM",
+        assignee: "SK",
         completedSubtasks: 3,
         totalSubtasks: 3,
         isWin: 0,

@@ -38,9 +38,12 @@ export function StickyNote({ goal, onCommentClick, isDragging = false }: StickyN
   };
 
   const getAssigneeStyle = (assignee: string) => {
-    return assignee === "JD" 
-      ? "bg-gradient-to-r from-primary/20 to-primary/30 text-primary border border-primary/30" 
-      : "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30";
+    if (assignee === "GC") {
+      return "bg-gradient-to-r from-primary/20 to-primary/30 text-primary border border-primary/30";
+    } else if (assignee === "SK") {
+      return "bg-gradient-to-r from-accent/20 to-accent/30 text-accent border border-accent/30";
+    }
+    return "bg-gradient-to-r from-gray-500/20 to-gray-500/30 text-gray-400 border border-gray-400/30";
   };
 
   return (

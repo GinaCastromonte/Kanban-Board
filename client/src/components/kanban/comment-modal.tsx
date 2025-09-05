@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MessageCircle, Send, ImageIcon } from "lucide-react";
@@ -21,6 +22,7 @@ interface CommentModalProps {
 export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
   const [newComment, setNewComment] = useState("");
   const [gifUrl, setGifUrl] = useState("");
+  const [selectedAuthor, setSelectedAuthor] = useState("GC");
   const queryClient = useQueryClient();
 
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
@@ -33,7 +35,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
       if (!goal) throw new Error("No goal selected");
       const response = await apiRequest("POST", "/api/comments", {
         goalId: goal.id,
-        author: "JD", // TODO: Get from auth context
+        author: selectedAuthor,
         content,
         gifUrl: gifUrl || null,
       });
@@ -106,7 +108,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
                           {comment.author}
                         </div>
                         <span className="text-sm font-medium" data-testid={`comment-author-name-${comment.id}`}>
-                          {comment.author === "JD" ? "John Doe" : "Sarah Miller"}
+                          {comment.author === "GC" ? "Grace Chen" : "Sam Kim"}
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground" data-testid={`comment-date-${comment.id}`}>
@@ -132,6 +134,37 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
 
           {/* Add comment form */}
           <form onSubmit={handleSubmit} className="space-y-3" data-testid="comment-form">
+            <div>
+              <Label className="block text-sm font-medium text-foreground mb-2">
+                Comment As
+              </Label>
+              <div className="flex space-x-2 mb-3">
+                <Badge
+                  className={cn(
+                    "cursor-pointer transition-colors",
+                    selectedAuthor === "GC" 
+                      ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                  onClick={() => setSelectedAuthor("GC")}
+                  data-testid="badge-author-gc"
+                >
+                  GC (Grace Chen)
+                </Badge>
+                <Badge
+                  className={cn(
+                    "cursor-pointer transition-colors",
+                    selectedAuthor === "SK" 
+                      ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  )}
+                  onClick={() => setSelectedAuthor("SK")}
+                  data-testid="badge-author-sk"
+                >
+                  SK (Sam Kim)
+                </Badge>
+              </div>
+            </div>
             <div>
               <Label htmlFor="comment-text" className="text-sm font-medium">Comment</Label>
               <Textarea
