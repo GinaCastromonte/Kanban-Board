@@ -29,6 +29,7 @@ export function KanbanBoard() {
     moveGoal,
     createGoal,
     createColumn,
+    deleteColumn,
     updateGoal,
     deleteGoal
   } = useKanban();
@@ -134,6 +135,7 @@ export function KanbanBoard() {
                     goals={boardGoals.filter(goal => goal.columnId === column.id)}
                     onCommentClick={handleCommentClick}
                     onCreateGoal={() => setIsGoalModalOpen(true)}
+                    onDeleteColumn={(columnId) => deleteColumn.mutate(columnId)}
                   />
                 </div>
               ))}
