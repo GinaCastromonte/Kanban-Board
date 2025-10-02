@@ -1,32 +1,67 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Board, Column, Goal, InsertGoal, InsertColumn, InsertBoard, MoveGoal, UpdateGoal } from "@shared/schema";
 
 export function useKanban() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [currentBoardId, setCurrentBoardId] = useState<string>("board1");
+  const [currentBoardId, setCurrentBoardId] = useState<string>("");
 
   // Fetch boards
   const { data: boards, isLoading: boardsLoading } = useQuery({
     queryKey: ["/api/boards"],
   });
 
+  // Auto-select first board when boards are loaded
+  useEffect(() => {
+    if (boards && Array.isArray(boards) && boards.length > 0 && !currentBoardId) {
+      setCurrentBoardId(boards[0].id);
+    }
+  }, [boards]);
+
   // Fetch columns for current board
   const { data: columns, isLoading: columnsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "columns"],
+    enabled: !!currentBoardId,
   });
 
   // Fetch goals for current board
   const { data: goals, isLoading: goalsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "goals"],
+    enabled: !!currentBoardId,
   });
 
   // Fetch wins for current board
   const { data: wins, isLoading: winsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "wins"],
+    enabled: !!currentBoardId,
+  });
+
+  // Fetch comment counts for all goals
+  const { data: commentCounts } = useQuery({
+    queryKey: ["/api/comment-counts", currentBoardId],
+    queryFn: async () => {
+      if (!goals || !Array.isArray(goals)) return {};
+      const counts: Record<string, number> = {};
+      
+      // Fetch comment counts for each goal
+      await Promise.all(
+        goals.map(async (goal: Goal) => {
+          try {
+            const response = await apiRequest("GET", `/api/goals/${goal.id}/comments`);
+            const comments = await response.json();
+            counts[goal.id] = Array.isArray(comments) ? comments.length : 0;
+          } catch (error) {
+            counts[goal.id] = 0;
+          }
+        })
+      );
+      
+      return counts;
+    },
+    enabled: !!currentBoardId && !!goals && Array.isArray(goals) && goals.length > 0,
   });
 
   // Create goal mutation
@@ -238,6 +273,7 @@ export function useKanban() {
     columns: columns as Column[] | undefined,
     goals: goals as Goal[] | undefined,
     wins: wins as Goal[] | undefined,
+    commentCounts: commentCounts || {},
     currentBoardId,
     setCurrentBoardId,
     isLoading,

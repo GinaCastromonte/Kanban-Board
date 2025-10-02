@@ -1,4 +1,4 @@
-import { Trophy, Rocket, Plus, StickyNote, Columns, Trash2 } from "lucide-react";
+import { Trophy, Rocket, Plus, Columns, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useKanban } from "@/hooks/use-kanban";
@@ -141,14 +141,6 @@ export function Sidebar() {
             Quick Actions
           </h3>
           <div className="space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-              data-testid="button-add-sticky-note"
-            >
-              <StickyNote className="mr-3" size={16} />
-              Add Sticky Note
-            </Button>
             <Button
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50"

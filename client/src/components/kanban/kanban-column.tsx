@@ -3,7 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
-import { StickyNote } from "./sticky-note";
+import { SortableGoal } from "./sortable-goal";
 import type { Column, Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -11,12 +11,13 @@ import { useState } from "react";
 interface KanbanColumnProps {
   column: Column;
   goals: Goal[];
+  commentCounts: Record<string, number>;
   onCommentClick: (goal: Goal) => void;
   onCreateGoal: () => void;
   onDeleteColumn?: (columnId: string) => void;
 }
 
-export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal, onDeleteColumn }: KanbanColumnProps) {
+export function KanbanColumn({ column, goals, commentCounts, onCommentClick, onCreateGoal, onDeleteColumn }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -85,9 +86,10 @@ export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal, onDe
       <div className="space-y-3 flex-1">
         <SortableContext items={goals.map(goal => goal.id)} strategy={verticalListSortingStrategy}>
           {goals.map((goal) => (
-            <StickyNote
+            <SortableGoal
               key={goal.id}
               goal={goal}
+              commentCount={commentCounts[goal.id] || 0}
               onCommentClick={onCommentClick}
             />
           ))}

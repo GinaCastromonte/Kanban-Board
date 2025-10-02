@@ -7,10 +7,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Board routes
   app.get("/api/boards", async (req, res) => {
     try {
+      console.log('🔍 Fetching boards...');
       const boards = await storage.getBoards();
+      console.log('✅ Boards fetched:', boards.length);
       res.json(boards);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch boards" });
+      console.error('❌ Error fetching boards:', error);
+      res.status(500).json({ message: "Failed to fetch boards", error: error.message });
     }
   });
 
@@ -51,10 +54,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Column routes
   app.get("/api/boards/:boardId/columns", async (req, res) => {
     try {
+      console.log('🔍 Fetching columns for board:', req.params.boardId);
       const columns = await storage.getColumnsByBoard(req.params.boardId);
+      console.log('✅ Columns fetched:', columns.length);
       res.json(columns);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch columns" });
+      console.error('❌ Error fetching columns:', error);
+      res.status(500).json({ message: "Failed to fetch columns", error: error.message });
     }
   });
 
