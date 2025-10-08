@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, rectIntersection, pointerWithin } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import { KanbanColumn } from "./kanban-column";
 import { WinsSection } from "./wins-section";
-import { StickyNote } from "./sticky-note";
+import { SortableGoal } from "./sortable-goal";
 import { GoalModal } from "./goal-modal";
 import { CommentModal } from "./comment-modal";
 import { ColumnModal } from "./column-modal";
@@ -18,6 +17,7 @@ export function KanbanBoard() {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
   const {
@@ -25,18 +25,22 @@ export function KanbanBoard() {
     columns,
     goals,
     wins,
+    commentCounts,
+    currentBoardId,
     isLoading,
     moveGoal,
     createGoal,
     createColumn,
+    deleteColumn,
     updateGoal,
     deleteGoal
   } = useKanban();
 
-  const currentBoard = boards?.[0];
+  const currentBoard = boards?.find(board => board.id === currentBoardId);
   const boardColumns = columns || [];
   const boardGoals = goals || [];
   const boardWins = wins || [];
+
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
@@ -66,7 +70,45 @@ export function KanbanBoard() {
       return;
     }
 
-    // Check if dropping in a column
+    // Check if dropping on another goal (reordering within column)
+    const overGoal = boardGoals.find(g => g.id === overId);
+    if (overGoal) {
+      const sourceGoal = boardGoals.find(g => g.id === goalId);
+      if (sourceGoal && sourceGoal.columnId === overGoal.columnId) {
+        // Reordering within the same column
+        const columnGoals = boardGoals
+          .filter(goal => goal.columnId === overGoal.columnId)
+          .sort((a, b) => a.position - b.position);
+        
+        const overIndex = columnGoals.findIndex(g => g.id === overId);
+        const sourceIndex = columnGoals.findIndex(g => g.id === goalId);
+        
+        if (sourceIndex !== overIndex) {
+          moveGoal.mutate({
+            goalId,
+            targetColumnId: overGoal.columnId || undefined,
+            targetPosition: overIndex,
+            isWin: false
+          });
+        }
+      } else if (sourceGoal) {
+        // Moving to a different column
+        const targetColumnGoals = boardGoals
+          .filter(goal => goal.columnId === overGoal.columnId)
+          .sort((a, b) => a.position - b.position);
+        
+        const overIndex = targetColumnGoals.findIndex(g => g.id === overId);
+        moveGoal.mutate({
+          goalId,
+          targetColumnId: overGoal.columnId || undefined,
+          targetPosition: overIndex,
+          isWin: false
+        });
+      }
+      return;
+    }
+
+    // Check if dropping in a column (empty column)
     const targetColumn = boardColumns.find(col => col.id === overId);
     if (targetColumn) {
       const columnGoals = boardGoals.filter(goal => goal.columnId === targetColumn.id);
@@ -80,8 +122,10 @@ export function KanbanBoard() {
   }
 
   function handleCommentClick(goal: Goal) {
+    console.log("🎯 handleCommentClick called with goal:", goal);
     setSelectedGoal(goal);
     setIsCommentModalOpen(true);
+    console.log("🎯 Modal state updated - should open now");
   }
 
   if (isLoading) {
@@ -94,7 +138,7 @@ export function KanbanBoard() {
 
   return (
     <DndContext
-      collisionDetection={closestCorners}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -126,18 +170,18 @@ export function KanbanBoard() {
           </div>
 
           <div className="flex gap-6 h-full min-h-[600px] overflow-x-auto pb-4">
-            <SortableContext items={boardColumns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-              {boardColumns.map((column) => (
-                <div key={column.id} className="flex-shrink-0 w-80">
-                  <KanbanColumn
-                    column={column}
-                    goals={boardGoals.filter(goal => goal.columnId === column.id)}
-                    onCommentClick={handleCommentClick}
-                    onCreateGoal={() => setIsGoalModalOpen(true)}
-                  />
-                </div>
-              ))}
-            </SortableContext>
+            {boardColumns.map((column) => (
+              <div key={column.id} className="flex-shrink-0 w-80">
+                <KanbanColumn
+                  column={column}
+                  goals={boardGoals.filter(goal => goal.columnId === column.id)}
+                  commentCounts={commentCounts}
+                  onCommentClick={handleCommentClick}
+                  onCreateGoal={() => setIsGoalModalOpen(true)}
+                  onDeleteColumn={(columnId) => deleteColumn.mutate(columnId)}
+                />
+              </div>
+            ))}
             
             {/* Add Column Button */}
             <div className="flex-shrink-0 w-80">
@@ -157,8 +201,9 @@ export function KanbanBoard() {
 
         <DragOverlay>
           {activeId && draggedGoal ? (
-            <StickyNote 
+            <SortableGoal 
               goal={draggedGoal} 
+              commentCount={commentCounts[draggedGoal.id] || 0}
               onCommentClick={handleCommentClick}
               isDragging 
             />

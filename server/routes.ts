@@ -7,10 +7,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Board routes
   app.get("/api/boards", async (req, res) => {
     try {
+      console.log('🔍 Fetching boards...');
       const boards = await storage.getBoards();
+      console.log('✅ Boards fetched:', boards.length);
       res.json(boards);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch boards" });
+      console.error('❌ Error fetching boards:', error);
+      res.status(500).json({ message: "Failed to fetch boards", error: error.message });
     }
   });
 
@@ -36,13 +39,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/boards/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteBoard(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete board" });
+    }
+  });
+
   // Column routes
   app.get("/api/boards/:boardId/columns", async (req, res) => {
     try {
+      console.log('🔍 Fetching columns for board:', req.params.boardId);
       const columns = await storage.getColumnsByBoard(req.params.boardId);
+      console.log('✅ Columns fetched:', columns.length);
       res.json(columns);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch columns" });
+      console.error('❌ Error fetching columns:', error);
+      res.status(500).json({ message: "Failed to fetch columns", error: error.message });
     }
   });
 
@@ -53,6 +71,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(column);
     } catch (error) {
       res.status(400).json({ message: "Invalid column data" });
+    }
+  });
+
+  app.delete("/api/columns/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteColumn(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Column not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete column" });
     }
   });
 

@@ -45,6 +45,9 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
       queryClient.invalidateQueries({
         queryKey: ["/api/goals", goal?.id, "comments"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/comment-counts"],
+      });
       setNewComment("");
       setGifUrl("");
     },
@@ -63,7 +66,17 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-lg mx-4 max-h-[80vh]" data-testid="comment-modal">
+      <DialogContent 
+        className="w-full max-w-lg mx-4 max-h-[75vh] mt-8" 
+        style={{ 
+          position: 'fixed',
+          top: '10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          maxHeight: '75vh'
+        }}
+        data-testid="comment-modal"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2" data-testid="comment-modal-title">
             <MessageCircle size={20} />
@@ -89,7 +102,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
           </div>
 
           {/* Comments list */}
-          <ScrollArea className="h-64 w-full border rounded-lg p-3" data-testid="comments-list">
+          <ScrollArea className="h-48 w-full border rounded-lg p-3" data-testid="comments-list">
             {isLoading ? (
               <div className="text-center text-muted-foreground py-8" data-testid="comments-loading">
                 Loading comments...
@@ -108,7 +121,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
                           {comment.author}
                         </div>
                         <span className="text-sm font-medium" data-testid={`comment-author-name-${comment.id}`}>
-                          {comment.author === "GC" ? "Grace Chen" : "Sam Kim"}
+                          {comment.author === "GC" ? "Gina C" : "Sofia K"}
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground" data-testid={`comment-date-${comment.id}`}>
@@ -149,7 +162,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
                   onClick={() => setSelectedAuthor("GC")}
                   data-testid="badge-author-gc"
                 >
-                  GC (Grace Chen)
+                  GC (Gina C)
                 </Badge>
                 <Badge
                   className={cn(
@@ -161,7 +174,7 @@ export function CommentModal({ isOpen, goal, onClose }: CommentModalProps) {
                   onClick={() => setSelectedAuthor("SK")}
                   data-testid="badge-author-sk"
                 >
-                  SK (Sam Kim)
+                  SK (Sofia K)
                 </Badge>
               </div>
             </div>

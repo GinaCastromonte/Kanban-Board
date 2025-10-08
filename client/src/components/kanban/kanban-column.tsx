@@ -2,22 +2,32 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Plus } from "lucide-react";
-import { StickyNote } from "./sticky-note";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { SortableGoal } from "./sortable-goal";
 import type { Column, Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface KanbanColumnProps {
   column: Column;
   goals: Goal[];
+  commentCounts: Record<string, number>;
   onCommentClick: (goal: Goal) => void;
   onCreateGoal: () => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
-export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal }: KanbanColumnProps) {
+export function KanbanColumn({ column, goals, commentCounts, onCommentClick, onCreateGoal, onDeleteColumn }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+
+  const handleDeleteColumn = () => {
+    if (onDeleteColumn && window.confirm(`Are you sure you want to delete the "${column.title}" column? This will also delete all goals in this column.`)) {
+      onDeleteColumn(column.id);
+    }
+  };
 
   const getColumnColor = (title: string) => {
     switch (title.toLowerCase()) {
@@ -41,7 +51,11 @@ export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal }: Ka
       )}
       data-testid={`column-${column.title.toLowerCase()}`}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div 
+        className="flex items-center justify-between mb-4"
+        onMouseEnter={() => setShowDeleteButton(true)}
+        onMouseLeave={() => setShowDeleteButton(false)}
+      >
         <div className="flex items-center space-x-3">
           <div className={cn("w-3 h-3 rounded-full", getColumnColor(column.title))} />
           <h3 className="font-semibold text-lg bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent" data-testid={`title-${column.title.toLowerCase()}`}>
@@ -51,17 +65,31 @@ export function KanbanColumn({ column, goals, onCommentClick, onCreateGoal }: Ka
             {goals.length}
           </Badge>
         </div>
-        <Button variant="ghost" size="sm" data-testid={`button-column-menu-${column.title.toLowerCase()}`}>
-          <MoreHorizontal size={16} />
-        </Button>
+        <div className="flex items-center space-x-1">
+          {showDeleteButton && onDeleteColumn && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="opacity-70 hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 p-1 h-6 w-6"
+              onClick={handleDeleteColumn}
+              data-testid={`delete-column-${column.title.toLowerCase()}`}
+            >
+              <Trash2 size={12} />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" data-testid={`button-column-menu-${column.title.toLowerCase()}`}>
+            <MoreHorizontal size={16} />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3 flex-1">
         <SortableContext items={goals.map(goal => goal.id)} strategy={verticalListSortingStrategy}>
           {goals.map((goal) => (
-            <StickyNote
+            <SortableGoal
               key={goal.id}
               goal={goal}
+              commentCount={commentCounts[goal.id] || 0}
               onCommentClick={onCommentClick}
             />
           ))}
