@@ -1,14 +1,21 @@
-import { Trophy, Rocket, Plus, Columns, Trash2 } from "lucide-react";
+import { Trophy, Rocket, Plus, Columns, Trash2, Edit, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useKanban } from "@/hooks/use-kanban";
+import type { Column } from "@shared/schema";
 
 export function Sidebar() {
-  const { boards, createBoard, deleteBoard, currentBoardId, setCurrentBoardId } = useKanban();
+  const { boards, columns, createBoard, deleteBoard, updateColumn, deleteColumn, currentBoardId, setCurrentBoardId } = useKanban();
   const [isCreatingBoard, setIsCreatingBoard] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [hoveredBoardId, setHoveredBoardId] = useState<string | null>(null);
+  const [isManageColumnsOpen, setIsManageColumnsOpen] = useState(false);
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editColor, setEditColor] = useState("");
 
   const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +44,51 @@ export function Sidebar() {
       }
     }
   };
+
+  const handleDeleteColumn = (column: Column) => {
+    if (window.confirm(`Are you sure you want to delete "${column.title}"? This will also delete all goals in this column.`)) {
+      deleteColumn.mutate(column.id);
+    }
+  };
+
+  const handleStartEdit = (column: Column) => {
+    setEditingColumnId(column.id);
+    setEditTitle(column.title);
+    setEditColor(column.color || "#3B82F6");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingColumnId(null);
+    setEditTitle("");
+    setEditColor("");
+  };
+
+  const handleSaveEdit = async (columnId: string) => {
+    if (!editTitle.trim()) return;
+
+    try {
+      await updateColumn.mutateAsync({
+        id: columnId,
+        title: editTitle.trim(),
+        color: editColor,
+      });
+      handleCancelEdit();
+    } catch (error) {
+      console.error("Failed to update column:", error);
+    }
+  };
+
+  const colorOptions = [
+    { name: "Indigo", value: "#6366F1" },
+    { name: "Purple", value: "#8B5CF6" },
+    { name: "Pink", value: "#EC4899" },
+    { name: "Red", value: "#EF4444" },
+    { name: "Orange", value: "#F97316" },
+    { name: "Yellow", value: "#EAB308" },
+    { name: "Green", value: "#22C55E" },
+    { name: "Blue", value: "#3B82F6" },
+    { name: "Teal", value: "#14B8A6" },
+  ];
 
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col" data-testid="sidebar">
@@ -145,6 +197,7 @@ export function Sidebar() {
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               data-testid="button-manage-columns"
+              onClick={() => setIsManageColumnsOpen(true)}
             >
               <Columns className="mr-3" size={16} />
               Manage Columns
@@ -152,6 +205,124 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isManageColumnsOpen} onOpenChange={(open) => {
+        setIsManageColumnsOpen(open);
+        if (!open) {
+          handleCancelEdit();
+        }
+      }}>
+        <DialogContent className="w-full max-w-md mx-4" data-testid="manage-columns-modal">
+          <DialogHeader>
+            <DialogTitle data-testid="modal-title">Manage Columns</DialogTitle>
+            <p className="text-sm text-muted-foreground" data-testid="modal-subtitle">
+              View and manage your board columns
+            </p>
+          </DialogHeader>
+          
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {columns && columns.length > 0 ? (
+              columns.map((column) => (
+                <div
+                  key={column.id}
+                  className="p-3 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
+                  data-testid={`column-item-${column.id}`}
+                >
+                  {editingColumnId === column.id ? (
+                    <div className="space-y-3">
+                      <div>
+                        <Input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="Column title"
+                          className="w-full"
+                          autoFocus
+                          data-testid={`edit-title-${column.id}`}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-2">Color</p>
+                        <div className="grid grid-cols-5 gap-2">
+                          {colorOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => setEditColor(option.value)}
+                              className={`w-6 h-6 rounded-full border-2 transition-all ${
+                                editColor === option.value
+                                  ? "border-foreground scale-110"
+                                  : "border-border hover:scale-105"
+                              }`}
+                              style={{ backgroundColor: option.value }}
+                              data-testid={`edit-color-${option.name.toLowerCase()}-${column.id}`}
+                              title={option.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          data-testid={`cancel-edit-${column.id}`}
+                        >
+                          <X size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSaveEdit(column.id)}
+                          disabled={!editTitle.trim() || updateColumn.isPending}
+                          data-testid={`save-edit-${column.id}`}
+                        >
+                          <Check size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div
+                          className="w-4 h-4 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: column.color || "#3B82F6" }}
+                        />
+                        <span className="font-medium text-foreground">{column.title}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => handleStartEdit(column)}
+                          data-testid={`edit-column-${column.id}`}
+                        >
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteColumn(column)}
+                          data-testid={`delete-column-${column.id}`}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground" data-testid="no-columns-message">
+                <Columns className="mx-auto mb-2 opacity-50" size={24} />
+                <p>No columns found</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

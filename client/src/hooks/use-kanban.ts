@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import type { Board, Column, Goal, InsertGoal, InsertColumn, InsertBoard, MoveGoal, UpdateGoal } from "@shared/schema";
+import type { Board, Column, Goal, InsertGoal, InsertColumn, InsertBoard, MoveGoal, UpdateGoal, UpdateColumn } from "@shared/schema";
 
 export function useKanban() {
   const queryClient = useQueryClient();
@@ -244,6 +244,28 @@ export function useKanban() {
     },
   });
 
+  // Update column mutation
+  const updateColumn = useMutation({
+    mutationFn: async ({ id, ...updates }: UpdateColumn & { id: string }) => {
+      const response = await apiRequest("PATCH", `/api/columns/${id}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", currentBoardId, "columns"] });
+      toast({
+        title: "Column updated",
+        description: "The column has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update column. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete column mutation
   const deleteColumn = useMutation({
     mutationFn: async (columnId: string) => {
@@ -281,6 +303,7 @@ export function useKanban() {
     deleteBoard,
     createGoal,
     createColumn,
+    updateColumn,
     deleteColumn,
     updateGoal,
     moveGoal,

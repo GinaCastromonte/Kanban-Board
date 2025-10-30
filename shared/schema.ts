@@ -125,5 +125,12 @@ export const moveGoalSchema = z.object({
   isWin: z.boolean().optional(),
 });
 
+export const updateColumnSchema = z.object({
+  title: z.string().optional(),
+  color: z.string().optional(),
+  position: z.number().optional(),
+});
+
 export type UpdateGoal = z.infer<typeof updateGoalSchema>;
 export type MoveGoal = z.infer<typeof moveGoalSchema>;
+export type UpdateColumn = z.infer<typeof updateColumnSchema>;

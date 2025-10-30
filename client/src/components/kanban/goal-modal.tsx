@@ -1,39 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import type { InsertGoal } from "@shared/schema";
+import type { InsertGoal, Goal, UpdateGoal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 interface GoalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (goal: Omit<InsertGoal, "boardId" | "columnId" | "position">) => void;
+  onUpdate?: (goal: UpdateGoal & { id: string }) => void;
+  goal?: Goal | null;
   isLoading?: boolean;
 }
 
-export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: GoalModalProps) {
+export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading = false }: GoalModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [goalType, setGoalType] = useState<"short-term" | "long-term">("short-term");
   const [assignee, setAssignee] = useState("GC");
   const [totalSubtasks, setTotalSubtasks] = useState(1);
 
+  const isEditMode = !!goal && !!onUpdate;
+
+  useEffect(() => {
+    if (goal && isOpen) {
+      setTitle(goal.title || "");
+      setDescription(goal.description || "");
+      setGoalType((goal.goalType === "long-term" ? "long-term" : "short-term"));
+      setAssignee(goal.assignee || "GC");
+      setTotalSubtasks(goal.totalSubtasks || 1);
+    } else if (!goal && isOpen) {
+ 
+      setTitle("");
+      setDescription("");
+      setGoalType("short-term");
+      setAssignee("GC");
+      setTotalSubtasks(1);
+    }
+  }, [goal, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) return;
 
-    onSubmit({
-      title: title.trim(),
-      description: description.trim(),
-      goalType,
-      assignee,
-      totalSubtasks,
-    });
+    if (isEditMode && goal && onUpdate) {
+      // Update existing goal
+      onUpdate({
+        id: goal.id,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        goalType,
+        totalSubtasks,
+      });
+    } else {
+      // Create new goal
+      onSubmit({
+        title: title.trim(),
+        description: description.trim(),
+        goalType,
+        assignee,
+        totalSubtasks,
+      });
+    }
 
     // Reset form
     setTitle("");
@@ -57,9 +90,11 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="w-full max-w-md mx-4" data-testid="goal-modal">
         <DialogHeader>
-          <DialogTitle data-testid="modal-title">Create New Goal</DialogTitle>
+          <DialogTitle data-testid="modal-title">
+            {isEditMode ? "Edit Goal" : "Create New Goal"}
+          </DialogTitle>
           <p className="text-sm text-muted-foreground" data-testid="modal-subtitle">
-            Add a new goal to track your progress
+            {isEditMode ? "Update your goal details" : "Add a new goal to track your progress"}
           </p>
         </DialogHeader>
         
@@ -186,9 +221,9 @@ export function GoalModal({ isOpen, onClose, onSubmit, isLoading = false }: Goal
             <Button 
               type="submit" 
               disabled={isLoading || !title.trim()}
-              data-testid="button-create-goal"
+              data-testid={isEditMode ? "button-update-goal" : "button-create-goal"}
             >
-              {isLoading ? "Creating..." : "Create Goal"}
+              {isLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Goal" : "Create Goal")}
             </Button>
           </div>
         </form>

@@ -13,11 +13,13 @@ interface KanbanColumnProps {
   goals: Goal[];
   commentCounts: Record<string, number>;
   onCommentClick: (goal: Goal) => void;
+  onEditClick?: (goal: Goal) => void;
+  onDeleteClick?: (goal: Goal) => void;
   onCreateGoal: () => void;
   onDeleteColumn?: (columnId: string) => void;
 }
 
-export function KanbanColumn({ column, goals, commentCounts, onCommentClick, onCreateGoal, onDeleteColumn }: KanbanColumnProps) {
+export function KanbanColumn({ column, goals, commentCounts, onCommentClick, onEditClick, onDeleteClick, onCreateGoal, onDeleteColumn }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -91,6 +93,8 @@ export function KanbanColumn({ column, goals, commentCounts, onCommentClick, onC
               goal={goal}
               commentCount={commentCounts[goal.id] || 0}
               onCommentClick={onCommentClick}
+              onEditClick={onEditClick}
+              onDeleteClick={onDeleteClick}
             />
           ))}
         </SortableContext>
