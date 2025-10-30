@@ -9,44 +9,37 @@ export function useKanban() {
   const { toast } = useToast();
   const [currentBoardId, setCurrentBoardId] = useState<string>("");
 
-  // Fetch boards
   const { data: boards, isLoading: boardsLoading } = useQuery({
     queryKey: ["/api/boards"],
   });
 
-  // Auto-select first board when boards are loaded
   useEffect(() => {
     if (boards && Array.isArray(boards) && boards.length > 0 && !currentBoardId) {
       setCurrentBoardId(boards[0].id);
     }
   }, [boards]);
 
-  // Fetch columns for current board
   const { data: columns, isLoading: columnsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "columns"],
     enabled: !!currentBoardId,
   });
 
-  // Fetch goals for current board
   const { data: goals, isLoading: goalsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "goals"],
     enabled: !!currentBoardId,
   });
 
-  // Fetch wins for current board
   const { data: wins, isLoading: winsLoading } = useQuery({
     queryKey: ["/api/boards", currentBoardId, "wins"],
     enabled: !!currentBoardId,
   });
 
-  // Fetch comment counts for all goals
   const { data: commentCounts } = useQuery({
     queryKey: ["/api/comment-counts", currentBoardId],
     queryFn: async () => {
       if (!goals || !Array.isArray(goals)) return {};
       const counts: Record<string, number> = {};
       
-      // Fetch comment counts for each goal
       await Promise.all(
         goals.map(async (goal: Goal) => {
           try {
@@ -64,7 +57,6 @@ export function useKanban() {
     enabled: !!currentBoardId && !!goals && Array.isArray(goals) && goals.length > 0,
   });
 
-  // Create goal mutation
   const createGoal = useMutation({
     mutationFn: async (goalData: InsertGoal) => {
       const response = await apiRequest("POST", "/api/goals", goalData);
@@ -86,7 +78,6 @@ export function useKanban() {
     },
   });
 
-  // Update goal mutation
   const updateGoal = useMutation({
     mutationFn: async ({ id, ...updates }: UpdateGoal & { id: string }) => {
       const response = await apiRequest("PATCH", `/api/goals/${id}`, updates);
@@ -109,7 +100,6 @@ export function useKanban() {
     },
   });
 
-  // Move goal mutation
   const moveGoal = useMutation({
     mutationFn: async (moveData: MoveGoal) => {
       const response = await apiRequest("POST", "/api/goals/move", moveData);
@@ -135,7 +125,6 @@ export function useKanban() {
     },
   });
 
-  // Delete goal mutation
   const deleteGoal = useMutation({
     mutationFn: async (goalId: string) => {
       await apiRequest("DELETE", `/api/goals/${goalId}`);
@@ -157,20 +146,17 @@ export function useKanban() {
     },
   });
 
-  // Create board mutation
   const createBoard = useMutation({
     mutationFn: async (boardData: InsertBoard) => {
       const response = await apiRequest("POST", "/api/boards", boardData);
       const newBoard = await response.json();
       
-      // Create default columns for the new board
       const defaultColumns = [
         { boardId: newBoard.id, title: "To Do", position: 0, color: "#3B82F6" },
         { boardId: newBoard.id, title: "Doing", position: 1, color: "#F59E0B" },
         { boardId: newBoard.id, title: "Done", position: 2, color: "#10B981" }
       ];
       
-      // Create each column
       for (const columnData of defaultColumns) {
         await apiRequest("POST", "/api/columns", columnData);
       }
@@ -194,7 +180,6 @@ export function useKanban() {
     },
   });
 
-  // Create column mutation
   const createColumn = useMutation({
     mutationFn: async (columnData: InsertColumn) => {
       const response = await apiRequest("POST", "/api/columns", columnData);
@@ -216,14 +201,12 @@ export function useKanban() {
     },
   });
 
-  // Delete board mutation
   const deleteBoard = useMutation({
     mutationFn: async (boardId: string) => {
       await apiRequest("DELETE", `/api/boards/${boardId}`);
     },
     onSuccess: (_, boardId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/boards"] });
-      // If we deleted the current board, switch to the first available board
       if (boardId === currentBoardId) {
         const remainingBoards = queryClient.getQueryData<Board[]>(["/api/boards"]);
         if (remainingBoards && remainingBoards.length > 0) {
@@ -244,7 +227,6 @@ export function useKanban() {
     },
   });
 
-  // Update column mutation
   const updateColumn = useMutation({
     mutationFn: async ({ id, ...updates }: UpdateColumn & { id: string }) => {
       const response = await apiRequest("PATCH", `/api/columns/${id}`, updates);
@@ -266,7 +248,6 @@ export function useKanban() {
     },
   });
 
-  // Delete column mutation
   const deleteColumn = useMutation({
     mutationFn: async (columnId: string) => {
       await apiRequest("DELETE", `/api/columns/${columnId}`);

@@ -61,7 +61,6 @@ export function KanbanBoard() {
     const goalId = active.id as string;
     const overId = over.id as string;
 
-    // Check if dropping in wins section
     if (overId === "wins") {
       moveGoal.mutate({
         goalId,
@@ -71,12 +70,10 @@ export function KanbanBoard() {
       return;
     }
 
-    // Check if dropping on another goal (reordering within column)
     const overGoal = boardGoals.find(g => g.id === overId);
     if (overGoal) {
       const sourceGoal = boardGoals.find(g => g.id === goalId);
       if (sourceGoal && sourceGoal.columnId === overGoal.columnId) {
-        // Reordering within the same column
         const columnGoals = boardGoals
           .filter(goal => goal.columnId === overGoal.columnId)
           .sort((a, b) => a.position - b.position);
@@ -93,7 +90,6 @@ export function KanbanBoard() {
           });
         }
       } else if (sourceGoal) {
-        // Moving to a different column
         const targetColumnGoals = boardGoals
           .filter(goal => goal.columnId === overGoal.columnId)
           .sort((a, b) => a.position - b.position);
@@ -109,7 +105,6 @@ export function KanbanBoard() {
       return;
     }
 
-    // Check if dropping in a column (empty column)
     const targetColumn = boardColumns.find(col => col.id === overId);
     if (targetColumn) {
       const columnGoals = boardGoals.filter(goal => goal.columnId === targetColumn.id);
@@ -201,7 +196,6 @@ export function KanbanBoard() {
               </div>
             ))}
             
-            {/* Add Column Button */}
             <div className="flex-shrink-0 w-80">
               <button
                 onClick={() => setIsColumnModalOpen(true)}

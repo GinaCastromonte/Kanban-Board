@@ -38,7 +38,6 @@ export function ColumnModal({ isOpen, onClose, onSubmit, isLoading = false }: Co
       color,
     });
 
-    // Reset form
     setTitle("");
     setColor("#6366F1");
     onClose();

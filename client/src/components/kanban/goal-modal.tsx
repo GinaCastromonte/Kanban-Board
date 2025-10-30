@@ -49,7 +49,6 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
     if (!title.trim()) return;
 
     if (isEditMode && goal && onUpdate) {
-      // Update existing goal
       onUpdate({
         id: goal.id,
         title: title.trim(),
@@ -58,7 +57,6 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
         totalSubtasks,
       });
     } else {
-      // Create new goal
       onSubmit({
         title: title.trim(),
         description: description.trim(),
@@ -68,7 +66,6 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
       });
     }
 
-    // Reset form
     setTitle("");
     setDescription("");
     setGoalType("short-term");

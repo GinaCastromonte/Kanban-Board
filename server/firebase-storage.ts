@@ -8,7 +8,6 @@ export class FirebaseStorage {
     }
   }
 
-  // Helper to convert Firestore Timestamps to ISO strings for JSON serialization
   private convertTimestamp(ts: any): string | null {
     if (!ts) return null;
     let date: Date | null = null;
@@ -19,12 +18,11 @@ export class FirebaseStorage {
     } else if (ts instanceof Date) {
       date = ts;
     } else {
-      return ts; // Return as-is if not a timestamp
+      return ts;
     }
     return date ? date.toISOString() : null;
   }
 
-  // Helper to map Firestore document to Goal with timestamp conversion
   private mapDocToGoal(doc: any, data: any): Goal {
     return {
       id: doc.id,
@@ -44,7 +42,6 @@ export class FirebaseStorage {
     } as Goal;
   }
 
-  // Helper to handle Firestore NOT_FOUND errors
   private handleNotFoundError(error: unknown, defaultReturn: any): any {
     if (error && typeof error === 'object' && 'code' in error && (error as any).code === 5) {
       return defaultReturn;
@@ -52,23 +49,18 @@ export class FirebaseStorage {
     throw error;
   }
 
-  // User operations (placeholder - not used in current app)
   async getUser(id: string): Promise<User | undefined> {
-    // Not implemented - user management not used in current app
     return undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    // Not implemented - user management not used in current app
     return undefined;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    // Not implemented - user management not used in current app
     throw new Error('User management not implemented');
   }
 
-  // Board operations
   async getBoards(): Promise<Board[]> {
     try {
       const snapshot = await db.collection(COLLECTIONS.BOARDS).orderBy('createdAt', 'asc').get();
@@ -93,7 +85,6 @@ export class FirebaseStorage {
     const doc = await docRef.get();
     const board = { id: doc.id, ...doc.data() } as Board;
     
-    // Create default columns
     const defaultColumns = [
       { title: "To Do", color: "#3B82F6", position: 0 },
       { title: "Doing", color: "#F59E0B", position: 1 },
@@ -129,24 +120,19 @@ export class FirebaseStorage {
 
   async deleteBoard(id: string): Promise<boolean> {
     try {
-      // Delete all related data
       const batch = db.batch();
       
-      // Delete columns
       const columnsSnapshot = await db.collection(COLLECTIONS.COLUMNS).where('boardId', '==', id).get();
       columnsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       
-      // Delete goals
       const goalsSnapshot = await db.collection(COLLECTIONS.GOALS).where('boardId', '==', id).get();
       goalsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       
-      // Delete comments for goals in this board
       for (const goalDoc of goalsSnapshot.docs) {
         const commentsSnapshot = await db.collection(COLLECTIONS.COMMENTS).where('goalId', '==', goalDoc.id).get();
         commentsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       }
       
-      // Delete the board
       batch.delete(db.collection(COLLECTIONS.BOARDS).doc(id));
       
       await batch.commit();
@@ -157,7 +143,6 @@ export class FirebaseStorage {
     }
   }
 
-  // Column operations
   async getColumnsByBoard(boardId: string): Promise<Column[]> {
     try {
       const snapshot = await db.collection(COLLECTIONS.COLUMNS)
@@ -209,17 +194,14 @@ export class FirebaseStorage {
     try {
       const batch = db.batch();
       
-      // Delete goals in this column
       const goalsSnapshot = await db.collection(COLLECTIONS.GOALS).where('columnId', '==', id).get();
       goalsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       
-      // Delete comments for goals in this column
       for (const goalDoc of goalsSnapshot.docs) {
         const commentsSnapshot = await db.collection(COLLECTIONS.COMMENTS).where('goalId', '==', goalDoc.id).get();
         commentsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       }
       
-      // Delete the column
       batch.delete(db.collection(COLLECTIONS.COLUMNS).doc(id));
       
       await batch.commit();
@@ -230,7 +212,6 @@ export class FirebaseStorage {
     }
   }
 
-  // Goal operations
   async getGoalsByBoard(boardId: string): Promise<Goal[]> {
     try {
       const snapshot = await db.collection(COLLECTIONS.GOALS)
@@ -324,11 +305,9 @@ export class FirebaseStorage {
     try {
       const batch = db.batch();
       
-      // Delete comments for this goal
       const commentsSnapshot = await db.collection(COLLECTIONS.COMMENTS).where('goalId', '==', id).get();
       commentsSnapshot.docs.forEach((doc: any) => batch.delete(doc.ref));
       
-      // Delete the goal
       batch.delete(db.collection(COLLECTIONS.GOALS).doc(id));
       
       await batch.commit();
@@ -343,13 +322,11 @@ export class FirebaseStorage {
     try {
       const { goalId, targetColumnId, targetPosition, isWin } = moveData;
       
-      // Get the goal to move
       const goalDoc = await db.collection(COLLECTIONS.GOALS).doc(goalId).get();
       if (!goalDoc.exists) return undefined;
       
       const goal = { id: goalDoc.id, ...goalDoc.data() } as Goal;
       
-      // Update the goal
       await db.collection(COLLECTIONS.GOALS).doc(goalId).update({
         columnId: targetColumnId || null,
         position: targetPosition,
@@ -357,7 +334,6 @@ export class FirebaseStorage {
         updatedAt: new Date()
       });
       
-      // If moving within the same column, update positions of other goals
       if (targetColumnId && goal.columnId === targetColumnId && !isWin) {
         const goalsSnapshot = await db.collection(COLLECTIONS.GOALS)
           .where('columnId', '==', targetColumnId)
@@ -379,7 +355,6 @@ export class FirebaseStorage {
         await batch.commit();
       }
       
-      // Return the updated goal
       const updatedDoc = await db.collection(COLLECTIONS.GOALS).doc(goalId).get();
       if (!updatedDoc.exists) return undefined;
       return this.mapDocToGoal(updatedDoc, updatedDoc.data());
@@ -389,7 +364,6 @@ export class FirebaseStorage {
     }
   }
 
-  // Comment operations
   async getCommentsByGoal(goalId: string): Promise<Comment[]> {
     try {
       const snapshot = await db.collection(COLLECTIONS.COMMENTS)
@@ -405,11 +379,10 @@ export class FirebaseStorage {
             author: data.author,
             content: data.content,
             gifUrl: data.gifUrl || null,
-            createdAt: this.convertTimestamp(data.createdAt),
-          } as Comment;
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as Comment;
         })
         .sort((a: Comment, b: Comment) => {
-          // Sort by createdAt if available
           if (a.createdAt && b.createdAt) {
             return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           }

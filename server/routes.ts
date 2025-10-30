@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { insertBoardSchema, insertColumnSchema, insertGoalSchema, insertCommentSchema, updateGoalSchema, moveGoalSchema, updateColumnSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Board routes
   app.get("/api/boards", async (req, res) => {
     try {
       const boards = await storage.getBoards();
@@ -49,7 +48,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Column routes
   app.get("/api/boards/:boardId/columns", async (req, res) => {
     try {
       const columns = await storage.getColumnsByBoard(req.params.boardId);
@@ -95,7 +93,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Goal routes
   app.get("/api/boards/:boardId/goals", async (req, res) => {
     try {
       const goals = await storage.getGoalsByBoard(req.params.boardId);
@@ -173,7 +170,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Comment routes
   app.get("/api/goals/:goalId/comments", async (req, res) => {
     try {
       const comments = await storage.getCommentsByGoal(req.params.goalId);
@@ -194,10 +190,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User routes
   app.get("/api/users", async (req, res) => {
     try {
-      // Get all users for assignee selection
       const user1 = await storage.getUser("user1");
       const user2 = await storage.getUser("user2");
       const users = [user1, user2].filter(Boolean);
