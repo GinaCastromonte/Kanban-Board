@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Expand, Star, Medal, Rocket, Heart, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Expand, Star, Medal, Rocket, Heart, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import type { Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -10,9 +10,11 @@ import { formatDistanceToNow } from "date-fns";
 interface WinsSectionProps {
   wins: Goal[];
   onCommentClick: (goal: Goal) => void;
+  onEditClick?: (goal: Goal) => void;
+  onDeleteClick?: (goal: Goal) => void;
 }
 
-export function WinsSection({ wins, onCommentClick }: WinsSectionProps) {
+export function WinsSection({ wins, onCommentClick, onEditClick, onDeleteClick }: WinsSectionProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: "wins",
@@ -81,10 +83,40 @@ export function WinsSection({ wins, onCommentClick }: WinsSectionProps) {
                 data-testid={`win-card-${win.id}`}
               >
                 <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-medium" data-testid={`win-title-${win.id}`}>
+                  <h4 className="font-medium flex-1" data-testid={`win-title-${win.id}`}>
                     {win.title}
                   </h4>
-                  {getWinIcon(index)}
+                  <div className="flex items-center space-x-1">
+                    {onEditClick && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditClick(win);
+                        }}
+                        className="text-muted-foreground hover:text-foreground hover:bg-background/50 p-1.5 rounded transition-colors"
+                        data-testid={`button-edit-win-${win.id}`}
+                        title="Edit goal"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    )}
+                    {onDeleteClick && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to delete "${win.title}"?`)) {
+                            onDeleteClick(win);
+                          }
+                        }}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1.5 rounded transition-colors"
+                        data-testid={`button-delete-win-${win.id}`}
+                        title="Delete goal"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                    {getWinIcon(index)}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3" data-testid={`win-description-${win.id}`}>
                   {win.description}

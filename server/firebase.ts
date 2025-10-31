@@ -2,7 +2,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin SDK only if credentials are provided
 let db: any = null;
 
 if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
@@ -17,7 +16,6 @@ if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && proce
     projectId: firebaseConfig.projectId,
   }) : getApps()[0];
 
-  // Get Firestore instance
   db = getFirestore(app);
   console.log('✅ Firebase initialized successfully');
 } else {
@@ -26,7 +24,6 @@ if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && proce
 
 export { db };
 
-// Collection names
 export const COLLECTIONS = {
   BOARDS: 'boards',
   COLUMNS: 'columns', 

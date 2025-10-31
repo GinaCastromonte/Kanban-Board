@@ -17,6 +17,7 @@ export function KanbanBoard() {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [goalToEdit, setGoalToEdit] = useState<Goal | null>(null);
 
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
@@ -60,7 +61,6 @@ export function KanbanBoard() {
     const goalId = active.id as string;
     const overId = over.id as string;
 
-    // Check if dropping in wins section
     if (overId === "wins") {
       moveGoal.mutate({
         goalId,
@@ -70,12 +70,10 @@ export function KanbanBoard() {
       return;
     }
 
-    // Check if dropping on another goal (reordering within column)
     const overGoal = boardGoals.find(g => g.id === overId);
     if (overGoal) {
       const sourceGoal = boardGoals.find(g => g.id === goalId);
       if (sourceGoal && sourceGoal.columnId === overGoal.columnId) {
-        // Reordering within the same column
         const columnGoals = boardGoals
           .filter(goal => goal.columnId === overGoal.columnId)
           .sort((a, b) => a.position - b.position);
@@ -92,7 +90,6 @@ export function KanbanBoard() {
           });
         }
       } else if (sourceGoal) {
-        // Moving to a different column
         const targetColumnGoals = boardGoals
           .filter(goal => goal.columnId === overGoal.columnId)
           .sort((a, b) => a.position - b.position);
@@ -108,7 +105,6 @@ export function KanbanBoard() {
       return;
     }
 
-    // Check if dropping in a column (empty column)
     const targetColumn = boardColumns.find(col => col.id === overId);
     if (targetColumn) {
       const columnGoals = boardGoals.filter(goal => goal.columnId === targetColumn.id);
@@ -122,10 +118,22 @@ export function KanbanBoard() {
   }
 
   function handleCommentClick(goal: Goal) {
-    console.log("🎯 handleCommentClick called with goal:", goal);
     setSelectedGoal(goal);
     setIsCommentModalOpen(true);
-    console.log("🎯 Modal state updated - should open now");
+  }
+
+  function handleEditClick(goal: Goal) {
+    setGoalToEdit(goal);
+    setIsGoalModalOpen(true);
+  }
+
+  function handleDeleteClick(goal: Goal) {
+    deleteGoal.mutate(goal.id);
+  }
+
+  function handleCloseGoalModal() {
+    setIsGoalModalOpen(false);
+    setGoalToEdit(null);
   }
 
   if (isLoading) {
@@ -177,13 +185,17 @@ export function KanbanBoard() {
                   goals={boardGoals.filter(goal => goal.columnId === column.id)}
                   commentCounts={commentCounts}
                   onCommentClick={handleCommentClick}
-                  onCreateGoal={() => setIsGoalModalOpen(true)}
+                  onEditClick={handleEditClick}
+                  onDeleteClick={handleDeleteClick}
+                  onCreateGoal={() => {
+                    setGoalToEdit(null);
+                    setIsGoalModalOpen(true);
+                  }}
                   onDeleteColumn={(columnId) => deleteColumn.mutate(columnId)}
                 />
               </div>
             ))}
             
-            {/* Add Column Button */}
             <div className="flex-shrink-0 w-80">
               <button
                 onClick={() => setIsColumnModalOpen(true)}
@@ -197,7 +209,7 @@ export function KanbanBoard() {
           </div>
         </div>
 
-        <WinsSection wins={boardWins} onCommentClick={handleCommentClick} />
+        <WinsSection wins={boardWins} onCommentClick={handleCommentClick} onEditClick={handleEditClick} onDeleteClick={handleDeleteClick} />
 
         <DragOverlay>
           {activeId && draggedGoal ? (
@@ -212,7 +224,8 @@ export function KanbanBoard() {
 
         <GoalModal
           isOpen={isGoalModalOpen}
-          onClose={() => setIsGoalModalOpen(false)}
+          onClose={handleCloseGoalModal}
+          goal={goalToEdit}
           onSubmit={(goalData) => {
             if (currentBoard && boardColumns.length > 0) {
               createGoal.mutate({
@@ -223,7 +236,10 @@ export function KanbanBoard() {
               });
             }
           }}
-          isLoading={createGoal.isPending}
+          onUpdate={(goalData) => {
+            updateGoal.mutate(goalData);
+          }}
+          isLoading={goalToEdit ? updateGoal.isPending : createGoal.isPending}
         />
 
         <CommentModal

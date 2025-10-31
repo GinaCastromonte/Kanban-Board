@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GripVertical, MessageCircle } from "lucide-react";
+import { GripVertical, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import type { Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
@@ -10,10 +10,12 @@ interface SortableGoalProps {
   goal: Goal;
   commentCount: number;
   onCommentClick: (goal: Goal) => void;
+  onEditClick?: (goal: Goal) => void;
+  onDeleteClick?: (goal: Goal) => void;
   isDragging?: boolean;
 }
 
-export function SortableGoal({ goal, commentCount, onCommentClick, isDragging = false }: SortableGoalProps) {
+export function SortableGoal({ goal, commentCount, onCommentClick, onEditClick, onDeleteClick, isDragging = false }: SortableGoalProps) {
   const {
     attributes,
     listeners,
@@ -37,22 +39,74 @@ export function SortableGoal({ goal, commentCount, onCommentClick, isDragging = 
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
       className={cn(
-        "bg-card rounded-lg p-4 border border-border hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
+        "bg-card rounded-lg p-4 border border-border hover:shadow-md transition-shadow",
         (isDragging || isSortableDragging) && "opacity-50 shadow-lg"
       )}
       data-testid={`goal-${goal.id}`}
     >
       <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-card-foreground flex-1" data-testid={`goal-title-${goal.id}`}>
+        <h4 
+          className="font-medium text-card-foreground flex-1 cursor-grab active:cursor-grabbing"
+          {...listeners}
+          data-testid={`goal-title-${goal.id}`}
+        >
           {goal.title}
         </h4>
         <div 
-          className="text-muted-foreground p-1 hover:bg-secondary/50 rounded"
-          data-testid={`drag-handle-${goal.id}`}
+          className="flex items-center space-x-1"
         >
-          <GripVertical size={12} />
+          {onEditClick && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onEditClick(goal);
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 p-1.5 rounded transition-colors"
+              data-testid={`button-edit-goal-${goal.id}`}
+              title="Edit goal"
+              type="button"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          {onDeleteClick && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (window.confirm(`Are you sure you want to delete "${goal.title}"?`)) {
+                  onDeleteClick(goal);
+                }
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-1.5 rounded transition-colors"
+              data-testid={`button-delete-goal-${goal.id}`}
+              title="Delete goal"
+              type="button"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+          <div 
+            className="text-muted-foreground p-1 hover:bg-secondary/50 rounded cursor-grab active:cursor-grabbing"
+            {...listeners}
+            data-testid={`drag-handle-${goal.id}`}
+          >
+            <GripVertical size={12} />
+          </div>
         </div>
       </div>
       
@@ -64,15 +118,22 @@ export function SortableGoal({ goal, commentCount, onCommentClick, isDragging = 
         <Badge variant="secondary" data-testid={`goal-type-${goal.id}`}>
           {goal.goalType === "short-term" ? "Short-term" : "Long-term"}
         </Badge>
-        <div 
-          className="text-muted-foreground hover:text-foreground hover:bg-primary/10 p-1 rounded cursor-pointer flex items-center space-x-1"
-          onMouseDown={(e) => {
+        <button
+          className="text-muted-foreground hover:text-foreground hover:bg-primary/10 p-1 rounded transition-colors flex items-center space-x-1"
+          onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             onCommentClick(goal);
           }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
           data-testid={`button-comment-${goal.id}`}
           title={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
+          type="button"
         >
           <MessageCircle size={12} />
           {commentCount > 0 && (
@@ -80,7 +141,7 @@ export function SortableGoal({ goal, commentCount, onCommentClick, isDragging = 
               {commentCount}
             </span>
           )}
-        </div>
+        </button>
       </div>
     </div>
   );

@@ -1,19 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBoardSchema, insertColumnSchema, insertGoalSchema, insertCommentSchema, updateGoalSchema, moveGoalSchema } from "@shared/schema";
+import { insertBoardSchema, insertColumnSchema, insertGoalSchema, insertCommentSchema, updateGoalSchema, moveGoalSchema, updateColumnSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Board routes
   app.get("/api/boards", async (req, res) => {
     try {
-      console.log('🔍 Fetching boards...');
       const boards = await storage.getBoards();
-      console.log('✅ Boards fetched:', boards.length);
       res.json(boards);
     } catch (error) {
-      console.error('❌ Error fetching boards:', error);
-      res.status(500).json({ message: "Failed to fetch boards", error: error.message });
+      console.error('Error fetching boards:', error);
+      res.status(500).json({ message: "Failed to fetch boards", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -51,16 +48,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Column routes
   app.get("/api/boards/:boardId/columns", async (req, res) => {
     try {
-      console.log('🔍 Fetching columns for board:', req.params.boardId);
       const columns = await storage.getColumnsByBoard(req.params.boardId);
-      console.log('✅ Columns fetched:', columns.length);
       res.json(columns);
     } catch (error) {
-      console.error('❌ Error fetching columns:', error);
-      res.status(500).json({ message: "Failed to fetch columns", error: error.message });
+      console.error('Error fetching columns:', error);
+      res.status(500).json({ message: "Failed to fetch columns", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -69,6 +63,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertColumnSchema.parse(req.body);
       const column = await storage.createColumn(validatedData);
       res.status(201).json(column);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid column data" });
+    }
+  });
+
+  app.patch("/api/columns/:id", async (req, res) => {
+    try {
+      const validatedData = updateColumnSchema.parse(req.body);
+      const column = await storage.updateColumn(req.params.id, validatedData);
+      if (!column) {
+        return res.status(404).json({ message: "Column not found" });
+      }
+      res.json(column);
     } catch (error) {
       res.status(400).json({ message: "Invalid column data" });
     }
@@ -86,13 +93,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Goal routes
   app.get("/api/boards/:boardId/goals", async (req, res) => {
     try {
       const goals = await storage.getGoalsByBoard(req.params.boardId);
       res.json(goals);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch goals" });
+      console.error('Error fetching goals:', error);
+      res.status(500).json({ message: "Failed to fetch goals", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -120,7 +127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const goal = await storage.createGoal(validatedData);
       res.status(201).json(goal);
     } catch (error) {
-      res.status(400).json({ message: "Invalid goal data" });
+      console.error('Error creating goal:', error);
+      res.status(400).json({ message: "Invalid goal data", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -162,13 +170,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Comment routes
   app.get("/api/goals/:goalId/comments", async (req, res) => {
     try {
       const comments = await storage.getCommentsByGoal(req.params.goalId);
       res.json(comments);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comments" });
+      console.error('Error fetching comments:', error);
+      res.status(500).json({ message: "Failed to fetch comments", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -182,10 +190,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User routes
   app.get("/api/users", async (req, res) => {
     try {
-      // Get all users for assignee selection
       const user1 = await storage.getUser("user1");
       const user2 = await storage.getUser("user2");
       const users = [user1, user2].filter(Boolean);

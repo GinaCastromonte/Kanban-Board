@@ -25,11 +25,11 @@ export const goals = pgTable("goals", {
   columnId: varchar("column_id"),
   boardId: varchar("board_id").notNull(),
   position: integer("position").notNull(),
-  goalType: text("goal_type").notNull().default("short-term"), // "short-term" | "long-term"
+  goalType: text("goal_type").notNull().default("short-term"),
   assignee: text("assignee").notNull(),
   completedSubtasks: integer("completed_subtasks").notNull().default(0),
   totalSubtasks: integer("total_subtasks").notNull().default(0),
-  isWin: integer("is_win").notNull().default(0), // 0 or 1 (boolean)
+  isWin: integer("is_win").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   completedAt: timestamp("completed_at"),
 });
@@ -51,7 +51,6 @@ export const users = pgTable("users", {
   initials: text("initials").notNull(),
 });
 
-// Insert schemas
 export const insertBoardSchema = createInsertSchema(boards).pick({
   title: true,
   description: true,
@@ -89,7 +88,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   initials: true,
 });
 
-// Types
 export type InsertBoard = z.infer<typeof insertBoardSchema>;
 export type Board = typeof boards.$inferSelect;
 
@@ -105,7 +103,6 @@ export type Comment = typeof comments.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Update schemas for API operations
 export const updateGoalSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
@@ -125,5 +122,12 @@ export const moveGoalSchema = z.object({
   isWin: z.boolean().optional(),
 });
 
+export const updateColumnSchema = z.object({
+  title: z.string().optional(),
+  color: z.string().optional(),
+  position: z.number().optional(),
+});
+
 export type UpdateGoal = z.infer<typeof updateGoalSchema>;
 export type MoveGoal = z.infer<typeof moveGoalSchema>;
+export type UpdateColumn = z.infer<typeof updateColumnSchema>;
