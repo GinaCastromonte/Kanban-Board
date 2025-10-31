@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBoardSchema, insertColumnSchema, insertGoalSchema, insertCommentSchema, updateGoalSchema, moveGoalSchema, updateColumnSchema } from "@shared/schema";
+import { insertBoardSchema, insertColumnSchema, insertGoalSchema, insertCommentSchema, updateGoalSchema, moveGoalSchema, updateColumnSchema, insertCheckInSchema, insertReactionSchema, insertNotificationSchema, insertWeeklyReviewSchema, insertSubtaskSchema, updateSubtaskSchema, updateBoardSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/boards", async (req, res) => {
@@ -31,6 +31,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBoardSchema.parse(req.body);
       const board = await storage.createBoard(validatedData);
       res.status(201).json(board);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid board data" });
+    }
+  });
+
+  app.patch("/api/boards/:id", async (req, res) => {
+    try {
+      const validatedData = updateBoardSchema.parse(req.body);
+      const board = await storage.updateBoard(req.params.id, validatedData);
+      if (!board) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+      res.json(board);
     } catch (error) {
       res.status(400).json({ message: "Invalid board data" });
     }
@@ -198,6 +211,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/check-ins", async (req, res) => {
+    try {
+      const validatedData = insertCheckInSchema.parse(req.body);
+      const checkIn = await storage.createCheckIn(validatedData);
+      res.status(201).json(checkIn);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid check-in data" });
+    }
+  });
+
+  app.get("/api/goals/:goalId/check-ins", async (req, res) => {
+    try {
+      const checkIns = await storage.getCheckInsByGoal(req.params.goalId);
+      res.json(checkIns);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch check-ins" });
+    }
+  });
+
+  app.get("/api/boards/:boardId/activities", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const activities = await storage.getActivitiesByBoard(req.params.boardId, limit);
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+
+  app.post("/api/reactions", async (req, res) => {
+    try {
+      const validatedData = insertReactionSchema.parse(req.body);
+      const reaction = await storage.createReaction(validatedData);
+      res.json(reaction);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid reaction data" });
+    }
+  });
+
+  app.get("/api/goals/:goalId/reactions", async (req, res) => {
+    try {
+      const reactions = await storage.getReactionsByGoal(req.params.goalId);
+      res.json(reactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch reactions" });
+    }
+  });
+
+  app.get("/api/users/:userId/notifications", async (req, res) => {
+    try {
+      const unreadOnly = req.query.unreadOnly === 'true';
+      const notifications = await storage.getNotificationsByUser(req.params.userId, unreadOnly);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const success = await storage.markNotificationAsRead(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch("/api/users/:userId/notifications/read-all", async (req, res) => {
+    try {
+      const success = await storage.markAllNotificationsAsRead(req.params.userId);
+      res.json({ success });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  app.post("/api/weekly-reviews", async (req, res) => {
+    try {
+      const validatedData = insertWeeklyReviewSchema.parse(req.body);
+      const review = await storage.createWeeklyReview(validatedData);
+      res.status(201).json(review);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid weekly review data" });
+    }
+  });
+
+  app.get("/api/boards/:boardId/weekly-reviews", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      const reviews = await storage.getWeeklyReviewsByBoard(req.params.boardId, userId);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch weekly reviews" });
+    }
+  });
+
+  app.get("/api/boards/:boardId/statistics/:userId", async (req, res) => {
+    try {
+      const stats = await storage.getStatisticsByBoard(req.params.boardId, req.params.userId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
+  app.post("/api/users/:userId/update-streak", async (req, res) => {
+    try {
+      const success = await storage.updateUserStreak(req.params.userId);
+      res.json({ success });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user streak" });
+    }
+  });
+
+  app.post("/api/subtasks", async (req, res) => {
+    try {
+      const validatedData = insertSubtaskSchema.parse(req.body);
+      const subtask = await storage.createSubtask(validatedData);
+      res.status(201).json(subtask);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid subtask data" });
+    }
+  });
+
+  app.get("/api/goals/:goalId/subtasks", async (req, res) => {
+    try {
+      const subtasks = await storage.getSubtasksByGoal(req.params.goalId);
+      res.json(subtasks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subtasks" });
+    }
+  });
+
+  app.patch("/api/subtasks/:id", async (req, res) => {
+    try {
+      const validatedData = updateSubtaskSchema.parse(req.body);
+      const subtask = await storage.updateSubtask(req.params.id, validatedData);
+      if (!subtask) {
+        return res.status(404).json({ message: "Subtask not found" });
+      }
+      res.json(subtask);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid subtask data" });
+    }
+  });
+
+  app.delete("/api/subtasks/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteSubtask(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Subtask not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete subtask" });
     }
   });
 

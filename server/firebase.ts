@@ -29,5 +29,11 @@ export const COLLECTIONS = {
   COLUMNS: 'columns', 
   GOALS: 'goals',
   COMMENTS: 'comments',
-  WINS: 'wins'
+  WINS: 'wins',
+  CHECK_INS: 'check_ins',
+  ACTIVITIES: 'activities',
+  REACTIONS: 'reactions',
+  NOTIFICATIONS: 'notifications',
+  WEEKLY_REVIEWS: 'weekly_reviews',
+  SUBTASKS: 'subtasks'
 } as const;

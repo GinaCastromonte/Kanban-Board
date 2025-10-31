@@ -1,13 +1,15 @@
-import { Trophy, Rocket, Plus, Columns, Trash2, Edit, Check, X } from "lucide-react";
+import { Trophy, Rocket, Plus, Columns, Trash2, Edit, Check, X, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useKanban } from "@/hooks/use-kanban";
+import { useLocation } from "wouter";
 import type { Column } from "@shared/schema";
 
 export function Sidebar() {
-  const { boards, columns, createBoard, deleteBoard, updateColumn, deleteColumn, currentBoardId, setCurrentBoardId } = useKanban();
+  const [location, setLocation] = useLocation();
+  const { boards, columns, createBoard, updateBoard, deleteBoard, updateColumn, deleteColumn, currentBoardId, setCurrentBoardId } = useKanban();
   const [isCreatingBoard, setIsCreatingBoard] = useState(false);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
@@ -16,6 +18,9 @@ export function Sidebar() {
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editColor, setEditColor] = useState("");
+  const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
+  const [editBoardTitle, setEditBoardTitle] = useState("");
+  const [editBoardDescription, setEditBoardDescription] = useState("");
 
   const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +36,33 @@ export function Sidebar() {
       setIsCreatingBoard(false);
     } catch (error) {
       console.error("Failed to create board:", error);
+    }
+  };
+
+  const handleStartEditBoard = (board: { id: string; title: string; description: string | null }) => {
+    setEditingBoardId(board.id);
+    setEditBoardTitle(board.title);
+    setEditBoardDescription(board.description || "");
+  };
+
+  const handleCancelEditBoard = () => {
+    setEditingBoardId(null);
+    setEditBoardTitle("");
+    setEditBoardDescription("");
+  };
+
+  const handleSaveEditBoard = async (boardId: string) => {
+    if (!editBoardTitle.trim()) return;
+
+    try {
+      await updateBoard.mutateAsync({
+        id: boardId,
+        title: editBoardTitle.trim(),
+        description: editBoardDescription.trim() || null,
+      });
+      handleCancelEditBoard();
+    } catch (error) {
+      console.error("Failed to update board:", error);
     }
   };
 
@@ -100,7 +132,7 @@ export function Sidebar() {
         <p className="text-sm text-muted-foreground" data-testid="text-subtitle">Track your personal goals</p>
       </div>
 
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide" data-testid="text-all-boards">
             All Boards ({boards?.length || 0})
@@ -113,24 +145,80 @@ export function Sidebar() {
                   board.id === currentBoardId
                     ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg" 
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                } rounded-lg p-3 font-medium flex items-center transition-colors cursor-pointer group relative`}
+                } rounded-lg p-3 font-medium transition-colors group relative`}
                 data-testid={`board-${board.id}`}
-                onClick={() => setCurrentBoardId(board.id)}
                 onMouseEnter={() => setHoveredBoardId(board.id)}
                 onMouseLeave={() => setHoveredBoardId(null)}
               >
-                <Rocket className="mr-3" size={16} />
-                <span className="flex-1">{board.title}</span>
-                {hoveredBoardId === board.id && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-70 hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 p-1 h-6 w-6"
-                    onClick={(e) => handleDeleteBoard(board.id, e)}
-                    data-testid={`delete-board-${board.id}`}
-                  >
-                    <Trash2 size={12} />
-                  </Button>
+                {editingBoardId === board.id ? (
+                  <div className="space-y-2">
+                    <Input
+                      type="text"
+                      value={editBoardTitle}
+                      onChange={(e) => setEditBoardTitle(e.target.value)}
+                      placeholder="Board title"
+                      className="w-full text-sm"
+                      autoFocus
+                      data-testid={`edit-board-title-${board.id}`}
+                    />
+                    <Input
+                      type="text"
+                      value={editBoardDescription}
+                      onChange={(e) => setEditBoardDescription(e.target.value)}
+                      placeholder="Description (optional)"
+                      className="w-full text-sm"
+                      data-testid={`edit-board-description-${board.id}`}
+                    />
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelEditBoard}
+                        data-testid={`cancel-edit-board-${board.id}`}
+                      >
+                        <X size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSaveEditBoard(board.id)}
+                        disabled={!editBoardTitle.trim() || updateBoard.isPending}
+                        data-testid={`save-edit-board-${board.id}`}
+                      >
+                        <Check size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center cursor-pointer" onClick={() => setCurrentBoardId(board.id)}>
+                    <Rocket className="mr-3" size={16} />
+                    <span className="flex-1">{board.title}</span>
+                    {hoveredBoardId === board.id && (
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-70 hover:opacity-100 text-foreground hover:bg-secondary/50 p-1 h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEditBoard(board);
+                          }}
+                          data-testid={`edit-board-${board.id}`}
+                        >
+                          <Edit size={12} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-70 hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 p-1 h-6 w-6"
+                          onClick={(e) => handleDeleteBoard(board.id, e)}
+                          data-testid={`delete-board-${board.id}`}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -201,6 +289,15 @@ export function Sidebar() {
             >
               <Columns className="mr-3" size={16} />
               Manage Columns
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              data-testid="button-statistics"
+              onClick={() => setLocation("/statistics")}
+            >
+              <BarChart3 className="mr-3" size={16} />
+              Statistics
             </Button>
           </div>
         </div>

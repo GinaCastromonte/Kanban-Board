@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import type { Board, Column, Goal, InsertGoal, InsertColumn, InsertBoard, MoveGoal, UpdateGoal, UpdateColumn } from "@shared/schema";
+import type { Board, Column, Goal, InsertGoal, InsertColumn, InsertBoard, MoveGoal, UpdateGoal, UpdateColumn, Activity, Reaction, CheckIn, Notification, WeeklyReview, InsertCheckIn, InsertReaction, InsertWeeklyReview, Subtask, InsertSubtask, UpdateSubtask, UpdateBoard } from "@shared/schema";
 
 export function useKanban() {
   const queryClient = useQueryClient();
@@ -180,6 +180,27 @@ export function useKanban() {
     },
   });
 
+  const updateBoard = useMutation({
+    mutationFn: async ({ id, ...updates }: UpdateBoard & { id: string }) => {
+      const response = await apiRequest("PATCH", `/api/boards/${id}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards"] });
+      toast({
+        title: "Board updated",
+        description: "The board has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update board. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createColumn = useMutation({
     mutationFn: async (columnData: InsertColumn) => {
       const response = await apiRequest("POST", "/api/columns", columnData);
@@ -269,7 +290,145 @@ export function useKanban() {
     },
   });
 
+  const { data: activities } = useQuery({
+    queryKey: ["/api/boards", currentBoardId, "activities"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/boards/${currentBoardId}/activities?limit=50`);
+      return response.json();
+    },
+    enabled: !!currentBoardId,
+  });
+
+  const { data: statistics } = useQuery({
+    queryKey: ["/api/boards", currentBoardId, "statistics", "GC"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/boards/${currentBoardId}/statistics/GC`);
+      return response.json();
+    },
+    enabled: !!currentBoardId,
+  });
+
+  const createCheckIn = useMutation({
+    mutationFn: async (checkInData: InsertCheckIn) => {
+      const response = await apiRequest("POST", "/api/check-ins", checkInData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+      toast({
+        title: "Check-in saved",
+        description: "Your progress update has been recorded.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save check-in. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createReaction = useMutation({
+    mutationFn: async (reactionData: InsertReaction) => {
+      const response = await apiRequest("POST", "/api/reactions", reactionData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
+    },
+  });
+
+  const createWeeklyReview = useMutation({
+    mutationFn: async (reviewData: InsertWeeklyReview) => {
+      const response = await apiRequest("POST", "/api/weekly-reviews", reviewData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", currentBoardId, "weekly-reviews"] });
+      toast({
+        title: "Weekly review saved",
+        description: "Your weekly reflection has been recorded.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save weekly review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserStreak = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await apiRequest("POST", `/api/users/${userId}/update-streak`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+  });
+
   const isLoading = boardsLoading || columnsLoading || goalsLoading || winsLoading;
+
+  const createSubtask = useMutation({
+    mutationFn: async (subtaskData: InsertSubtask) => {
+      const response = await apiRequest("POST", "/api/subtasks", subtaskData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", currentBoardId, "goals"] });
+      toast({
+        title: "Subtask added",
+        description: "Subtask has been added successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create subtask. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSubtask = useMutation({
+    mutationFn: async ({ id, ...updates }: UpdateSubtask & { id: string }) => {
+      const response = await apiRequest("PATCH", `/api/subtasks/${id}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", currentBoardId, "goals"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update subtask. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSubtask = useMutation({
+    mutationFn: async (subtaskId: string) => {
+      await apiRequest("DELETE", `/api/subtasks/${subtaskId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/boards", currentBoardId, "goals"] });
+      toast({
+        title: "Subtask deleted",
+        description: "Subtask has been deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete subtask. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   return {
     boards: boards as Board[] | undefined,
@@ -277,10 +436,13 @@ export function useKanban() {
     goals: goals as Goal[] | undefined,
     wins: wins as Goal[] | undefined,
     commentCounts: commentCounts || {},
+    activities: activities as Activity[] | undefined,
+    statistics: statistics as any,
     currentBoardId,
     setCurrentBoardId,
     isLoading,
     createBoard,
+    updateBoard,
     deleteBoard,
     createGoal,
     createColumn,
@@ -289,5 +451,12 @@ export function useKanban() {
     updateGoal,
     moveGoal,
     deleteGoal,
+    createCheckIn,
+    createReaction,
+    createWeeklyReview,
+    updateUserStreak,
+    createSubtask,
+    updateSubtask,
+    deleteSubtask,
   };
 }

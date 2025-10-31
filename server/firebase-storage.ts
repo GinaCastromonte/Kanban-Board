@@ -1,5 +1,5 @@
 import { db, COLLECTIONS } from './firebase.js';
-import type { User, InsertUser, Board, Column, Goal, Comment, InsertBoard, InsertColumn, InsertGoal, InsertComment, UpdateGoal, MoveGoal } from '@shared/schema';
+import type { User, InsertUser, Board, Column, Goal, Comment, InsertBoard, InsertColumn, InsertGoal, InsertComment, UpdateGoal, MoveGoal, CheckIn, Activity, Reaction, Notification, WeeklyReview, InsertCheckIn, InsertActivity, InsertReaction, InsertNotification, InsertWeeklyReview, Subtask, InsertSubtask, UpdateSubtask, UpdateBoard } from '@shared/schema';
 
 export class FirebaseStorage {
   constructor() {
@@ -39,6 +39,9 @@ export class FirebaseStorage {
       createdAt: this.convertTimestamp(data.createdAt),
       updatedAt: this.convertTimestamp(data.updatedAt),
       completedAt: this.convertTimestamp(data.completedAt),
+      dueDate: this.convertTimestamp(data.dueDate),
+      isJointGoal: data.isJointGoal ?? 0,
+      sharedWith: data.sharedWith || null,
     } as Goal;
   }
 
@@ -103,7 +106,7 @@ export class FirebaseStorage {
     return board;
   }
 
-  async updateBoard(id: string, updates: Partial<InsertBoard>): Promise<Board | undefined> {
+  async updateBoard(id: string, updates: UpdateBoard): Promise<Board | undefined> {
     try {
       await db.collection(COLLECTIONS.BOARDS).doc(id).update({
         ...updates,
@@ -279,6 +282,9 @@ export class FirebaseStorage {
       ...goalData,
       isWin: 0,
       completedSubtasks: 0,
+      isJointGoal: goalData.isJointGoal ?? 0,
+      sharedWith: goalData.sharedWith || null,
+      dueDate: goalData.dueDate ? new Date(goalData.dueDate) : null,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -288,8 +294,12 @@ export class FirebaseStorage {
 
   async updateGoal(id: string, updates: UpdateGoal): Promise<Goal | undefined> {
     try {
+      const updateData: any = { ...updates };
+      if (updates.dueDate) {
+        updateData.dueDate = new Date(updates.dueDate);
+      }
       await db.collection(COLLECTIONS.GOALS).doc(id).update({
-        ...updates,
+        ...updateData,
         updatedAt: new Date()
       });
       const doc = await db.collection(COLLECTIONS.GOALS).doc(id).get();
@@ -423,6 +433,502 @@ export class FirebaseStorage {
       return true;
     } catch (error) {
       console.error('Error deleting comment:', error);
+      return false;
+    }
+  }
+
+  async createCheckIn(checkInData: InsertCheckIn): Promise<CheckIn> {
+    const docRef = await db.collection(COLLECTIONS.CHECK_INS).add({
+      ...checkInData,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    return {
+      id: doc.id,
+      goalId: data.goalId,
+      userId: data.userId,
+      status: data.status,
+      notes: data.notes || null,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as CheckIn;
+  }
+
+  async getCheckInsByGoal(goalId: string): Promise<CheckIn[]> {
+    try {
+      const snapshot = await db.collection(COLLECTIONS.CHECK_INS)
+        .where('goalId', '==', goalId)
+        .orderBy('createdAt', 'desc')
+        .get();
+      
+      return snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          goalId: data.goalId,
+          userId: data.userId,
+          status: data.status,
+          notes: data.notes || null,
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as CheckIn;
+      });
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async createActivity(activityData: InsertActivity): Promise<Activity> {
+    const docRef = await db.collection(COLLECTIONS.ACTIVITIES).add({
+      ...activityData,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    return {
+      id: doc.id,
+      boardId: data.boardId,
+      userId: data.userId,
+      type: data.type,
+      goalId: data.goalId || null,
+      description: data.description,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as Activity;
+  }
+
+  async getActivitiesByBoard(boardId: string, limit: number = 50): Promise<Activity[]> {
+    try {
+      const snapshot = await db.collection(COLLECTIONS.ACTIVITIES)
+        .where('boardId', '==', boardId)
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .get();
+      
+      return snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          boardId: data.boardId,
+          userId: data.userId,
+          type: data.type,
+          goalId: data.goalId || null,
+          description: data.description,
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as Activity;
+      });
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async createReaction(reactionData: InsertReaction): Promise<Reaction> {
+    const existingSnapshot = await db.collection(COLLECTIONS.REACTIONS)
+      .where('goalId', '==', reactionData.goalId)
+      .where('userId', '==', reactionData.userId)
+      .where('type', '==', reactionData.type)
+      .get();
+    
+    if (!existingSnapshot.empty) {
+      const existingDoc = existingSnapshot.docs[0];
+      await db.collection(COLLECTIONS.REACTIONS).doc(existingDoc.id).delete();
+      return existingDoc.data() as Reaction;
+    }
+    
+    const docRef = await db.collection(COLLECTIONS.REACTIONS).add({
+      ...reactionData,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    return {
+      id: doc.id,
+      goalId: data.goalId,
+      userId: data.userId,
+      type: data.type,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as Reaction;
+  }
+
+  async getReactionsByGoal(goalId: string): Promise<Reaction[]> {
+    try {
+      const snapshot = await db.collection(COLLECTIONS.REACTIONS)
+        .where('goalId', '==', goalId)
+        .get();
+      
+      return snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          goalId: data.goalId,
+          userId: data.userId,
+          type: data.type,
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as Reaction;
+      });
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const docRef = await db.collection(COLLECTIONS.NOTIFICATIONS).add({
+      ...notificationData,
+      read: 0,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    return {
+      id: doc.id,
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      goalId: data.goalId || null,
+      read: data.read ?? 0,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as Notification;
+  }
+
+  async getNotificationsByUser(userId: string, unreadOnly: boolean = false): Promise<Notification[]> {
+    try {
+      let query = db.collection(COLLECTIONS.NOTIFICATIONS)
+        .where('userId', '==', userId);
+      
+      if (unreadOnly) {
+        query = query.where('read', '==', 0);
+      }
+      
+      const snapshot = await query
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+      
+      return snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userId: data.userId,
+          type: data.type,
+          title: data.title,
+          message: data.message,
+          goalId: data.goalId || null,
+          read: data.read ?? 0,
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as Notification;
+      });
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<boolean> {
+    try {
+      await db.collection(COLLECTIONS.NOTIFICATIONS).doc(notificationId).update({
+        read: 1
+      });
+      return true;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      return false;
+    }
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<boolean> {
+    try {
+      const snapshot = await db.collection(COLLECTIONS.NOTIFICATIONS)
+        .where('userId', '==', userId)
+        .where('read', '==', 0)
+        .get();
+      
+      const batch = db.batch();
+      snapshot.docs.forEach((doc: any) => {
+        batch.update(doc.ref, { read: 1 });
+      });
+      
+      await batch.commit();
+      return true;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      return false;
+    }
+  }
+
+  async createWeeklyReview(reviewData: InsertWeeklyReview): Promise<WeeklyReview> {
+    const weekStartDate = reviewData.weekStartDate instanceof Date 
+      ? reviewData.weekStartDate 
+      : new Date(reviewData.weekStartDate);
+    const docRef = await db.collection(COLLECTIONS.WEEKLY_REVIEWS).add({
+      ...reviewData,
+      weekStartDate: weekStartDate,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    const retrievedWeekStartDate = data.weekStartDate?.toDate ? data.weekStartDate.toDate() : new Date(data.weekStartDate);
+    return {
+      id: doc.id,
+      boardId: data.boardId,
+      userId: data.userId,
+      weekStartDate: retrievedWeekStartDate,
+      whatWentWell: data.whatWentWell || null,
+      whatToFocusOn: data.whatToFocusOn || null,
+      goalsCompleted: data.goalsCompleted ?? 0,
+      goalsInProgress: data.goalsInProgress ?? 0,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as WeeklyReview;
+  }
+
+  async getWeeklyReviewsByBoard(boardId: string, userId?: string): Promise<WeeklyReview[]> {
+    try {
+      let query = db.collection(COLLECTIONS.WEEKLY_REVIEWS)
+        .where('boardId', '==', boardId);
+      
+      if (userId) {
+        query = query.where('userId', '==', userId);
+      }
+      
+      const snapshot = await query
+        .orderBy('weekStartDate', 'desc')
+        .limit(20)
+        .get();
+      
+      return snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        const retrievedWeekStartDate = data.weekStartDate?.toDate ? data.weekStartDate.toDate() : new Date(data.weekStartDate);
+        return {
+          id: doc.id,
+          boardId: data.boardId,
+          userId: data.userId,
+          weekStartDate: retrievedWeekStartDate,
+          whatWentWell: data.whatWentWell || null,
+          whatToFocusOn: data.whatToFocusOn || null,
+          goalsCompleted: data.goalsCompleted ?? 0,
+          goalsInProgress: data.goalsInProgress ?? 0,
+          createdAt: this.convertTimestamp(data.createdAt),
+        } as WeeklyReview;
+      });
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async updateUserStreak(userId: string): Promise<boolean> {
+    try {
+      const user = await this.getUser(userId);
+      if (!user) return false;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const lastActivity = user.lastActivityDate ? new Date(user.lastActivityDate) : null;
+      const lastActivityDate = lastActivity ? new Date(lastActivity.getFullYear(), lastActivity.getMonth(), lastActivity.getDate()) : null;
+      
+      let currentStreak = user.currentStreak ?? 0;
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      if (!lastActivityDate) {
+        currentStreak = 1;
+      } else if (lastActivityDate.getTime() === today.getTime()) {
+        return true;
+      } else if (lastActivityDate.getTime() === yesterday.getTime()) {
+        currentStreak = (user.currentStreak ?? 0) + 1;
+      } else {
+        currentStreak = 1;
+      }
+      
+      const longestStreak = Math.max(currentStreak, user.longestStreak ?? 0);
+      
+      await db.collection('users').doc(userId).update({
+        currentStreak,
+        longestStreak,
+        lastActivityDate: today
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating user streak:', error);
+      return false;
+    }
+  }
+
+  async getStatisticsByBoard(boardId: string, userId: string): Promise<any> {
+    try {
+      const goals = await this.getGoalsByBoard(boardId);
+      const userGoals = goals.filter((g: Goal) => g.assignee === userId || g.sharedWith === userId);
+      const wins = await this.getWins(boardId);
+      const userWins = wins.filter((w: Goal) => w.assignee === userId || w.sharedWith === userId);
+      
+      const completed = userWins.length;
+      const inProgress = userGoals.filter((g: Goal) => !g.isWin).length;
+      const total = userGoals.length + userWins.length;
+      const completionRate = total > 0 ? (completed / total) * 100 : 0;
+      
+      const allUserGoalIds = [...userGoals.map((g: Goal) => g.id), ...userWins.map((w: Goal) => w.id)];
+      let totalSubtasks = 0;
+      let completedSubtasks = 0;
+      
+      for (const goalId of allUserGoalIds) {
+        try {
+          const subtasks = await this.getSubtasksByGoal(goalId);
+          totalSubtasks += subtasks.length;
+          completedSubtasks += subtasks.filter((s: Subtask) => s.completed === 1).length;
+        } catch (error) {
+          continue;
+        }
+      }
+      
+      const subtaskCompletionRate = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+      
+      const goalsWithDueDates = userGoals.filter((g: Goal) => g.dueDate);
+      const overdue = goalsWithDueDates.filter((g: Goal) => {
+        if (!g.dueDate) return false;
+        return new Date(g.dueDate) < new Date() && !g.isWin;
+      }).length;
+      
+      const upcomingDeadlines = goalsWithDueDates.filter((g: Goal) => {
+        if (!g.dueDate || g.isWin) return false;
+        const dueDate = new Date(g.dueDate);
+        const today = new Date();
+        const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return daysDiff >= 0 && daysDiff <= 7;
+      }).length;
+      
+      return {
+        total,
+        completed,
+        inProgress,
+        completionRate: Math.round(completionRate * 100) / 100,
+        overdue,
+        upcomingDeadlines,
+        totalSubtasks,
+        completedSubtasks,
+        subtaskCompletionRate: Math.round(subtaskCompletionRate * 100) / 100,
+      };
+    } catch (error) {
+      console.error('Error getting statistics:', error);
+      return {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        completionRate: 0,
+        overdue: 0,
+        upcomingDeadlines: 0,
+        totalSubtasks: 0,
+        completedSubtasks: 0,
+        subtaskCompletionRate: 0,
+      };
+    }
+  }
+
+  async createSubtask(subtaskData: InsertSubtask): Promise<Subtask> {
+    const docRef = await db.collection(COLLECTIONS.SUBTASKS).add({
+      ...subtaskData,
+      completed: 0,
+      createdAt: new Date()
+    });
+    const doc = await docRef.get();
+    const data = doc.data();
+    
+    const goal = await this.getGoal(subtaskData.goalId);
+    if (goal) {
+      await this.updateGoal(goal.id, {
+        totalSubtasks: (goal.totalSubtasks || 0) + 1
+      });
+    }
+    
+    return {
+      id: doc.id,
+      goalId: data.goalId,
+      title: data.title,
+      completed: data.completed ?? 0,
+      position: data.position ?? 0,
+      createdAt: this.convertTimestamp(data.createdAt),
+    } as Subtask;
+  }
+
+  async getSubtasksByGoal(goalId: string): Promise<Subtask[]> {
+    try {
+      const snapshot = await db.collection(COLLECTIONS.SUBTASKS)
+        .where('goalId', '==', goalId)
+        .get();
+      
+      return snapshot.docs
+        .map((doc: any) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            goalId: data.goalId,
+            title: data.title,
+            completed: data.completed ?? 0,
+            position: data.position ?? 0,
+            createdAt: this.convertTimestamp(data.createdAt),
+          } as Subtask;
+        })
+        .sort((a: Subtask, b: Subtask) => a.position - b.position);
+    } catch (error) {
+      return this.handleNotFoundError(error, []);
+    }
+  }
+
+  async updateSubtask(id: string, updates: UpdateSubtask): Promise<Subtask | undefined> {
+    try {
+      const subtaskDoc = await db.collection(COLLECTIONS.SUBTASKS).doc(id).get();
+      if (!subtaskDoc.exists) return undefined;
+      
+      const subtaskData = subtaskDoc.data();
+      const oldCompleted = subtaskData.completed ?? 0;
+      
+      await db.collection(COLLECTIONS.SUBTASKS).doc(id).update({
+        ...updates,
+        updatedAt: new Date()
+      });
+      
+      const goal = await this.getGoal(subtaskData.goalId);
+      if (goal && updates.completed !== undefined) {
+        const newCompleted = updates.completed;
+        const completedDiff = newCompleted - oldCompleted;
+        await this.updateGoal(goal.id, {
+          completedSubtasks: (goal.completedSubtasks || 0) + completedDiff
+        });
+      }
+      
+      const updatedDoc = await db.collection(COLLECTIONS.SUBTASKS).doc(id).get();
+      const data = updatedDoc.data();
+      return {
+        id: updatedDoc.id,
+        goalId: data.goalId,
+        title: data.title,
+        completed: data.completed ?? 0,
+        position: data.position ?? 0,
+        createdAt: this.convertTimestamp(data.createdAt),
+      } as Subtask;
+    } catch (error) {
+      console.error('Error updating subtask:', error);
+      return undefined;
+    }
+  }
+
+  async deleteSubtask(id: string): Promise<boolean> {
+    try {
+      const subtaskDoc = await db.collection(COLLECTIONS.SUBTASKS).doc(id).get();
+      if (!subtaskDoc.exists) return false;
+      
+      const subtaskData = subtaskDoc.data();
+      const goal = await this.getGoal(subtaskData.goalId);
+      
+      await db.collection(COLLECTIONS.SUBTASKS).doc(id).delete();
+      
+      if (goal) {
+        const wasCompleted = subtaskData.completed === 1;
+        await this.updateGoal(goal.id, {
+          totalSubtasks: Math.max(0, (goal.totalSubtasks || 0) - 1),
+          completedSubtasks: wasCompleted ? Math.max(0, (goal.completedSubtasks || 0) - 1) : goal.completedSubtasks
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
       return false;
     }
   }
