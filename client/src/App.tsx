@@ -5,11 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import KanbanPage from "@/pages/kanban";
+import StatisticsPage from "@/pages/statistics";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={KanbanPage} />
+      <Route path="/statistics" component={StatisticsPage} />
       <Route component={NotFound} />
     </Switch>
   );

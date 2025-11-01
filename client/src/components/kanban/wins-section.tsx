@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Expand, Star, Medal, Rocket, Heart, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
+import { Trophy, Star, Medal, Rocket, Heart, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import type { Goal } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -15,7 +15,7 @@ interface WinsSectionProps {
 }
 
 export function WinsSection({ wins, onCommentClick, onEditClick, onDeleteClick }: WinsSectionProps) {
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const { setNodeRef, isOver } = useDroppable({
     id: "wins",
   });
@@ -48,20 +48,15 @@ export function WinsSection({ wins, onCommentClick, onEditClick, onDeleteClick }
               {wins.length} this week
             </Badge>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-muted-foreground hover:text-foreground" 
-              onClick={() => setIsMinimized(!isMinimized)}
-              data-testid="button-minimize-wins"
-            >
-              {isMinimized ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" data-testid="button-expand-wins">
-              <Expand size={16} />
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-muted-foreground hover:text-foreground" 
+            onClick={() => setIsMinimized(!isMinimized)}
+            data-testid="button-toggle-wins"
+          >
+            {isMinimized ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          </Button>
         </div>
         
         {!isMinimized && (

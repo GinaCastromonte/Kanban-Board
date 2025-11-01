@@ -1,7 +1,8 @@
 import 'dotenv/config';
-import express, { type Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createServer, type Server } from "http";
 
 const app = express();
 app.use(express.json());
@@ -37,8 +38,14 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
+let serverInstance: Server | null = null;
+let routesRegistered = false;
+
+export async function createApp(): Promise<Express> {
+  if (!routesRegistered) {
+    serverInstance = await registerRoutes(app);
+    routesRegistered = true;
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -48,18 +55,35 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  if (process.env.VERCEL) {
+    return app;
+  }
+
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    if (serverInstance) {
+      await setupVite(app, serverInstance);
+    }
   } else {
     serveStatic(app);
   }
 
-  const port = parseInt(process.env.PORT || '3000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+  return app;
+}
+
+export default app;
+
+if (!process.env.VERCEL) {
+  (async () => {
+    await createApp();
+    const port = parseInt(process.env.PORT || '3000', 10);
+    if (serverInstance) {
+      (serverInstance as Server).listen({
+        port,
+        host: "0.0.0.0",
+        reusePort: true,
+      }, () => {
+        log(`serving on port ${port}`);
+      });
+    }
+  })();
+}
