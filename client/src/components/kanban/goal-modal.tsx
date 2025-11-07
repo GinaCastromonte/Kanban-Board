@@ -193,7 +193,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-md max-h-[90vh] mx-4 flex flex-col" data-testid="goal-modal">
+      <DialogContent className="w-full max-w-xl max-h-[90vh] mx-4 flex flex-col" data-testid="goal-modal">
         <DialogHeader>
           <DialogTitle data-testid="modal-title">
             {isEditMode ? "Edit Goal" : "Create New Goal"}
@@ -204,7 +204,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 min-h-0">
-          <div>
+          <div className="w-full">
             <Label htmlFor="title" className="block text-sm font-medium text-foreground mb-2">
               Goal Title
             </Label>
@@ -220,7 +220,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
             />
           </div>
           
-          <div>
+          <div className="w-full">
             <Label htmlFor="description" className="block text-sm font-medium text-foreground mb-2">
               Description
             </Label>
@@ -229,7 +229,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your goal..."
-              className="w-full h-24 resize-none"
+              className="w-full h-16 resize-none"
               data-testid="textarea-goal-description"
             />
           </div>
@@ -303,7 +303,7 @@ export function GoalModal({ isOpen, onClose, onSubmit, onUpdate, goal, isLoading
               <Label className="block text-sm font-medium text-foreground mb-2">
                 Subtasks
               </Label>
-              <div className="space-y-2 max-h-48 overflow-y-auto border border-border rounded-md p-2">
+              <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-md p-2">
                 {subtasks.map((subtask) => (
                   <div key={subtask.id} className="flex items-center space-x-2">
                     <input
