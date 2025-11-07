@@ -16,7 +16,7 @@
   ],
   "functions": {
     "api/**/*.ts": {
-    "includeFiles": "{server,shared}/**"
+      "includeFiles": "{server,shared}/**"
     }
   }
 }
